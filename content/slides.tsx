@@ -44,6 +44,8 @@ export interface Slide {
   /** The record, one tap away. */
   detail?: () => React.ReactElement;
   detailLabel?: string;
+  /** Two or three words naming this slide in the rail. Says where you are. */
+  marker: string;
   /** Drop the rail and use the whole width. */
   wide?: boolean;
   footnote?: string;
@@ -255,6 +257,7 @@ function FlowMap() {
 export const SLIDES: Slide[] = [
   {
     id: "cover",
+    marker: "The picture",
     chapter: "operations",
     title: "One caravan. Nowhere to look it up.",
     line: "A day at the order desk in Hull. Here is what we found.",
@@ -301,6 +304,7 @@ export const SLIDES: Slide[] = [
   },
   {
     id: "throttle",
+    marker: "The throttle",
     chapter: "operations",
     title: "One caravan. Sixteen jobs around it.",
     line: "Add another and watch the desk run out of year.",
@@ -356,6 +360,7 @@ export const SLIDES: Slide[] = [
   },
   {
     id: "scales",
+    marker: "Built properly",
     chapter: "operations",
     title: "The same order, built properly.",
     line: "Nothing entered twice, so adding volume adds no admin.",
@@ -389,6 +394,7 @@ export const SLIDES: Slide[] = [
   },
   {
     id: "sim",
+    marker: "Run the season",
     chapter: "operations",
     title: "Run the season.",
     line: "Press play. Watch how much of it is just waiting.",
@@ -419,6 +425,7 @@ export const SLIDES: Slide[] = [
   },
   {
     id: "van",
+    marker: "Follow one",
     chapter: "operations",
     title: "Follow one caravan.",
     line: "From a batch number to a line in a handwritten book.",
@@ -427,6 +434,7 @@ export const SLIDES: Slide[] = [
   },
   {
     id: "people",
+    marker: "Who holds it",
     chapter: "leadership",
     title: `One desk holds ${word(HEAVIEST.steps.length)} of ${word(TOTAL_STEPS)}.`,
     line: "Take someone out and watch the work move, or stop.",
@@ -472,6 +480,7 @@ export const SLIDES: Slide[] = [
   },
   {
     id: "capacity",
+    marker: "The ceiling",
     chapter: "leadership",
     title: "Add caravans. Find the ceiling.",
     line: "The factory scales with lines. The order desk does not.",
@@ -496,6 +505,7 @@ export const SLIDES: Slide[] = [
   },
   {
     id: "hours",
+    marker: "What it costs",
     chapter: "leadership",
     title: "What the manual work costs.",
     line: "Your volumes. Move the minutes and the totals follow.",
@@ -504,6 +514,7 @@ export const SLIDES: Slide[] = [
   },
   {
     id: "faults",
+    marker: "What is broken",
     chapter: "leadership",
     title: "Four things are broken.",
     line: "Not missing. Broken, and already paid for.",
@@ -527,6 +538,7 @@ export const SLIDES: Slide[] = [
   },
   {
     id: "decisions",
+    marker: "Three decisions",
     chapter: "technical",
     title: "Three decisions carry the weight.",
     line: "A product for this kind of manufacturer. Coachman first.",
@@ -560,6 +572,7 @@ export const SLIDES: Slide[] = [
   },
   {
     id: "ask",
+    marker: "The ask",
     chapter: "technical",
     title: "What we need from you.",
     line: "Five things, and one decision.",

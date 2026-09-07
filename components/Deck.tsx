@@ -260,6 +260,14 @@ function Rail({ i, onJump }: { i: number; onJump: (n: number) => void }) {
               onClick={() => onJump(idx[0].n)}
             >
               {c.name}
+              {active ? (
+                <em>
+                  {SLIDES[i].marker}
+                  <i>
+                    {idx.findIndex((x) => x.n === i) + 1}/{idx.length}
+                  </i>
+                </em>
+              ) : null}
             </button>
             <span className="rail-ticks">
               {idx.map(({ n }) => (
@@ -268,6 +276,7 @@ function Rail({ i, onJump }: { i: number; onJump: (n: number) => void }) {
                   type="button"
                   className={`tickm${n === i ? " now" : ""}${n < i ? " done" : ""}`}
                   onClick={() => onJump(n)}
+                  title={SLIDES[n].marker}
                   aria-label={`Slide ${n + 1}: ${SLIDES[n].title}`}
                   aria-current={n === i ? "step" : undefined}
                 />
