@@ -306,7 +306,7 @@ export const SLIDES: Slide[] = [
     id: "throttle",
     marker: "The throttle",
     chapter: "operations",
-    title: "One caravan. Sixteen jobs around it.",
+    title: "Sixteen jobs. Twenty done twice.",
     line: "Add another and watch the desk run out of year.",
     body: () => <HubSim mode="today" />,
     aside: () => (
