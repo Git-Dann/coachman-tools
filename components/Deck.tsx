@@ -65,6 +65,7 @@ export function Deck({ start }: { start: ChapterId }) {
   }, [go, jump, total]);
 
   const Body = slide.body;
+  const Aside = slide.aside;
   const Detail = slide.detail;
 
   return (
@@ -91,21 +92,38 @@ export function Deck({ start }: { start: ChapterId }) {
         }}
       >
         <section className="slide" key={slide.id} aria-labelledby={`t-${slide.id}`}>
-          <div className="slide-in">
-            <p className="slide-kicker">
-              <span>{CHAPTERS.find((c) => c.id === slide.chapter)?.name}</span>
-              <b>
-                {i + 1} / {total}
-              </b>
-            </p>
-            <h1 id={`t-${slide.id}`} className="slide-h">
-              {slide.title}
-            </h1>
-            {slide.standfirst ? (
-              <p className="slide-stand">{slide.standfirst}</p>
-            ) : null}
-            <div className="slide-body">
+          {/* Desktop puts the interactive thing first and biggest, with the
+              words in a narrow rail beside it. Phones stack, words first. */}
+          <div className={`slide-grid${slide.wide ? " wide" : ""}`}>
+            <div className="stage">
               <Body />
+            </div>
+            <div className="aside">
+              <p className="slide-kicker">
+                <span>{CHAPTERS.find((c) => c.id === slide.chapter)?.name}</span>
+                <b>
+                  {i + 1} / {total}
+                </b>
+              </p>
+              <h1 id={`t-${slide.id}`} className="slide-h">
+                {slide.title}
+              </h1>
+              {slide.line ? <p className="slide-line">{slide.line}</p> : null}
+              {Aside ? (
+                <div className="aside-body">
+                  <Aside />
+                </div>
+              ) : null}
+              {Detail ? (
+                <button
+                  type="button"
+                  className="basis"
+                  onClick={() => setDetail(true)}
+                  aria-haspopup="dialog"
+                >
+                  {slide.detailLabel ?? "Where this comes from"}
+                </button>
+              ) : null}
             </div>
           </div>
         </section>
@@ -122,18 +140,9 @@ export function Deck({ start }: { start: ChapterId }) {
           &#8592;
         </button>
 
-        {Detail ? (
-          <button
-            type="button"
-            className="dbtn wide"
-            onClick={() => setDetail(true)}
-            aria-haspopup="dialog"
-          >
-            {slide.detailLabel ?? "Where this comes from"}
-          </button>
-        ) : (
-          <span className="dbtn wide ghost">{slide.footnote ?? ""}</span>
-        )}
+        <span className="dbtn wide ghost">
+          {slide.footnote ?? "Arrow keys to move · click the rail to jump"}
+        </span>
 
         <button
           type="button"

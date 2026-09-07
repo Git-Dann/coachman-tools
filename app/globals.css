@@ -1028,6 +1028,9 @@ body {
 /* ------------------------------------------------------------------ rail */
 
 .rail {
+  position: relative;
+  z-index: 6;
+  background: var(--color-ink);
   display: flex;
   gap: 2px;
   padding: 8px 12px 6px;
@@ -1090,28 +1093,74 @@ body {
 .slide-wrap {
   flex: 1 1 auto;
   min-height: 0;
-  overflow-y: auto;
-  overscroll-behavior-y: contain;
-  -webkit-overflow-scrolling: touch;
+  overflow: hidden;
+  position: relative;
 }
 .slide {
-  min-height: 100%;
-  display: flex;
-  align-items: flex-start;
+  height: 100%;
 }
-.slide-in {
-  width: 100%;
-  max-width: 780px;
+
+/*
+ * Desktop is the room this gets presented in, so it leads: the interactive
+ * thing takes the space and the words sit in a narrow rail beside it. Phones
+ * stack, words first, and everything scrolls.
+ */
+.slide-grid {
+  height: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 34px;
+  padding: 24px 30px 20px;
+  max-width: 1600px;
   margin: 0 auto;
-  padding: 22px 16px 32px;
-  animation: rise 0.32s ease-out;
+  animation: rise 0.3s ease-out;
+}
+.slide-grid.wide {
+  grid-template-columns: minmax(0, 1fr);
+}
+.slide-grid.wide .aside {
+  display: none;
+}
+.slide-grid.wide .stage {
+  padding-top: 0;
 }
 @keyframes rise {
   from {
     opacity: 0;
-    transform: translateY(8px);
+    transform: translateY(6px);
   }
 }
+
+.stage {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  /* Centre it when it fits, and start at the top when it does not.
+     Plain `center` (and auto margins) push overflow past the start edge where
+     it can never be scrolled back to. `safe` is the keyword that fixes it, and
+     where it is unsupported the declaration is dropped and content starts at
+     the top, which is the behaviour we want anyway. */
+  justify-content: safe center;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.stage > * {
+  min-height: 0;
+}
+
+.aside {
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  display: flex;
+  flex-direction: column;
+  justify-content: safe center;
+  align-self: stretch;
+  max-height: 100%;
+}
+
 .slide-kicker {
   display: flex;
   justify-content: space-between;
@@ -1130,29 +1179,50 @@ body {
 }
 .slide-h {
   font-weight: 800;
-  font-size: clamp(25px, 6.4vw, 40px);
-  line-height: 1.05;
-  letter-spacing: -0.03em;
-  margin: 0 0 14px;
+  font-size: clamp(26px, 2.6vw, 40px);
+  line-height: 1.03;
+  letter-spacing: -0.032em;
+  margin: 0 0 12px;
   text-wrap: balance;
   color: var(--color-text);
 }
-.slide-stand {
-  font-size: clamp(15px, 4vw, 18px);
+.slide-line {
+  font-size: 15.5px;
   color: var(--color-text-2);
   line-height: 1.5;
-  margin: 0 0 22px;
-  max-width: 54ch;
+  margin: 0;
+  max-width: 40ch;
 }
-.slide-body > *:first-child {
-  margin-top: 0;
+.aside-body {
+  margin-top: 20px;
 }
 .hint {
-  font-family: var(--font-mono);
-  font-size: 10.5px;
+  font-size: 13px;
   color: var(--color-text-3);
-  line-height: 1.6;
-  margin-top: 18px;
+  line-height: 1.55;
+  margin: 0;
+  max-width: 38ch;
+}
+
+/* The way into the evidence. Quiet until you want it. */
+.basis {
+  margin-top: 22px;
+  align-self: flex-start;
+  background: none;
+  border: 1px solid var(--color-line-2);
+  border-radius: var(--r);
+  color: var(--color-brass);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  padding: 11px 14px;
+  cursor: pointer;
+  min-height: 42px;
+  text-align: left;
+}
+.basis:hover {
+  border-color: var(--color-brass);
 }
 
 /* ------------------------------------------------------------- deck bar */
@@ -1745,3 +1815,281 @@ body {
   min-height: 42px;
 }
 
+
+/* ============================================== desktop-first components */
+
+/* The map fills whatever room the stage gives it. */
+.map.fill {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.map.fill .map-canvas {
+  flex: 1 1 auto;
+  min-height: 220px;
+  height: auto;
+}
+
+/* ----------------------------------------------------------- flow sim */
+
+.sim {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.sim-canvas {
+  display: block;
+  width: 100%;
+  flex: 1 1 auto;
+  min-height: 260px;
+  border: 1px solid var(--color-line);
+  border-radius: var(--r);
+  background: var(--color-surface);
+}
+.sim-read {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 1px;
+  background: var(--color-line);
+  border: 1px solid var(--color-line);
+  border-radius: var(--r);
+  overflow: hidden;
+  flex: none;
+}
+.sr-cell {
+  background: var(--color-ink);
+  padding: 12px 14px;
+}
+.sr-cell b {
+  display: block;
+  font-weight: 800;
+  font-size: clamp(20px, 2.2vw, 28px);
+  line-height: 1;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text);
+}
+.sr-cell.wide b {
+  font-size: clamp(15px, 1.5vw, 20px);
+  letter-spacing: -0.015em;
+}
+.sr-cell.ok b {
+  color: var(--color-moss);
+}
+.sr-cell.bad b {
+  color: var(--color-flag);
+}
+.sr-cell span {
+  display: block;
+  margin-top: 6px;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-3);
+}
+.sim-ctl {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  flex: none;
+}
+.play {
+  background: var(--color-brass);
+  border: 1px solid var(--color-brass);
+  border-radius: var(--r);
+  color: #171104;
+  font-weight: 700;
+  font-size: 14px;
+  padding: 0 20px;
+  min-height: 46px;
+  cursor: pointer;
+  letter-spacing: -0.01em;
+}
+.play.on {
+  background: none;
+  color: var(--color-brass);
+}
+.mini.big {
+  min-height: 46px;
+  padding: 0 16px;
+  font-size: 10px;
+}
+.tgl.inline.compact button {
+  min-height: 42px;
+  font-size: 12.5px;
+  padding: 0 14px;
+}
+.tgl.inline.compact {
+  margin-bottom: 0;
+}
+.rate {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1 1 180px;
+  min-width: 160px;
+}
+.rate span {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--color-text-3);
+  white-space: nowrap;
+}
+.rate input {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ------------------------------------------------- models, two columns */
+
+/* On a wide screen the model splits: picture left, controls and readout
+   right. On a phone it stacks in the same order. */
+.model-block {
+  display: grid;
+  gap: 18px;
+  /* Same trap as the stage: plain `center` pushes overflow above the top edge
+     where it cannot be scrolled back to. */
+  align-content: safe center;
+}
+@media (min-width: 1000px) {
+  .model-split {
+    grid-template-columns: minmax(0, 1.15fr) minmax(260px, 0.85fr);
+    gap: 28px;
+    align-items: start;
+  }
+  .model-split > .ms-main {
+    min-width: 0;
+  }
+  .model-split > .ms-side {
+    min-width: 0;
+  }
+}
+.ms-main,
+.ms-side {
+  display: grid;
+  gap: 14px;
+  align-content: start;
+}
+
+/* --------------------------------------------------------- van player */
+
+.van {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.van-main {
+  min-height: 0;
+}
+.van-stage {
+  font-weight: 800;
+  font-size: clamp(24px, 3vw, 36px);
+  letter-spacing: -0.03em;
+  margin: 0 0 10px;
+  color: var(--color-text);
+}
+.van-desc {
+  color: var(--color-text-2);
+  font-size: clamp(15px, 1.5vw, 17px);
+  max-width: 60ch;
+  margin: 0 0 18px;
+}
+.van-ctl {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.van-id {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-3);
+  font-variant-numeric: tabular-nums;
+}
+.tick {
+  min-width: 22px;
+  height: 38px;
+}
+
+/* ------------------------------------------------------------- lists */
+
+ul.pl.big li {
+  font-size: clamp(16px, 1.7vw, 19px);
+  line-height: 1.5;
+  max-width: 46ch;
+  margin-bottom: 4px;
+}
+ul.pl.big li::before {
+  margin-top: 13px;
+}
+
+/* ------------------------------------------------------------ mobile */
+
+@media (max-width: 999px) {
+  .slide-wrap {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .slide {
+    height: auto;
+    min-height: 100%;
+  }
+  .slide-grid,
+  .slide-grid.wide {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "aside" "stage";
+    gap: 20px;
+    padding: 18px 16px 28px;
+    height: auto;
+  }
+  .slide-grid.wide .aside {
+    display: flex;
+  }
+  .aside {
+    grid-area: aside;
+    overflow: visible;
+    max-height: none;
+    align-self: stretch;
+  }
+  .stage {
+    grid-area: stage;
+    overflow: visible;
+    justify-content: flex-start;
+  }
+  .map.fill .map-canvas,
+  .sim-canvas {
+    min-height: 300px;
+    height: 300px;
+    flex: none;
+  }
+  .basis {
+    width: 100%;
+    text-align: center;
+  }
+}
+
+@media (max-width: 620px) {
+  .mast {
+    padding: 9px 14px;
+  }
+  .mast-by {
+    display: none;
+  }
+  .rail {
+    padding: 7px 10px 5px;
+  }
+  .sim-ctl .play {
+    flex: 1 1 100%;
+  }
+  .rate {
+    flex: 1 1 100%;
+  }
+}

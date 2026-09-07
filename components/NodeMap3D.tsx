@@ -21,10 +21,13 @@ import {
 export function NodeMap3D({
   graph,
   height = 340,
+  fill = false,
   onSelect,
 }: {
   graph: Graph;
   height?: number;
+  /** Grow to whatever room the stage has, rather than a fixed height. */
+  fill?: boolean;
   onSelect?: (node: Node3D | null) => void;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -231,11 +234,11 @@ export function NodeMap3D({
   const node = graph.nodes.find((n) => n.id === selected) ?? null;
 
   return (
-    <div className="map">
+    <div className={`map${fill ? " fill" : ""}`}>
       <canvas
         ref={canvasRef}
         className="map-canvas"
-        style={{ height }}
+        style={fill ? undefined : { height }}
         onPointerDown={pointerDown}
         onPointerMove={pointerMove}
         onPointerUp={pointerUp}

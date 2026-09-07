@@ -3,8 +3,9 @@
 import { useMemo, useState } from "react";
 import { NodeMap3D } from "@/components/NodeMap3D";
 import { CapacityModel } from "@/components/CapacityModel";
-import { HoursModel } from "@/components/HoursModel";
 import { PeopleModel } from "@/components/PeopleModel";
+import { HoursModel } from "@/components/HoursModel";
+import { FlowSim } from "@/components/FlowSim";
 import { flowGraph, unitGraph } from "./graphs";
 import { STEPS } from "./steps";
 import { HANDOFFS } from "./handoffs";
@@ -14,13 +15,7 @@ import { STAGES } from "./stages";
 import { VAN } from "./van";
 import { SYSTEMS, ACCESS_NOTES } from "./systems";
 import { ASSIGNMENTS, PEOPLE, PEOPLE_CAVEAT } from "./people";
-import {
-  HEAVIEST,
-  NO_COVER_STEPS,
-  TOTAL_STEPS,
-  stepTitle,
-  word,
-} from "@/lib/model";
+import { HEAVIEST, NO_COVER_STEPS, TOTAL_STEPS, stepTitle, word } from "@/lib/model";
 import { TECH } from "./copy";
 
 export type ChapterId = "operations" | "leadership" | "technical";
@@ -34,12 +29,19 @@ export const CHAPTERS: { id: ChapterId; name: string; path: string }[] = [
 export interface Slide {
   id: string;
   chapter: ChapterId;
+  /** Seven words at most. It is a headline, not a sentence. */
   title: string;
-  standfirst?: string;
+  /** One line. If it needs two, it belongs in the detail sheet. */
+  line?: string;
+  /** The interactive thing. Gets the room. */
   body: () => React.ReactElement;
-  /** The record behind the slide. Opens in a sheet. */
+  /** Anything else for the rail beside the headline. */
+  aside?: () => React.ReactElement;
+  /** The record, one tap away. */
   detail?: () => React.ReactElement;
   detailLabel?: string;
+  /** Drop the rail and use the whole width. */
+  wide?: boolean;
   footnote?: string;
 }
 
@@ -71,186 +73,7 @@ function Big({
   );
 }
 
-/** The sixteen steps, with the today/proposed switch. Used in a detail sheet. */
-function StepList() {
-  const [proposed, setProposed] = useState(false);
-  const [open, setOpen] = useState<number | null>(null);
-  return (
-    <>
-      <div className="tgl inline" role="group" aria-label="Mode">
-        <button
-          type="button"
-          aria-pressed={!proposed}
-          onClick={() => setProposed(false)}
-        >
-          Today
-        </button>
-        <button
-          type="button"
-          aria-pressed={proposed}
-          onClick={() => setProposed(true)}
-        >
-          What we would build
-        </button>
-      </div>
-      <div className="steps">
-        {STEPS.map((s) => {
-          const gone = proposed && !s.keep;
-          const isOpen = open === s.n;
-          return (
-            <div
-              key={s.n}
-              className={`step${isOpen ? " open" : ""}${gone ? " gone" : ""}`}
-            >
-              <button
-                type="button"
-                className="step-btn"
-                aria-expanded={isOpen}
-                onClick={() => setOpen(isOpen ? null : s.n)}
-              >
-                <span className="step-n">{s.n < 10 ? `0${s.n}` : s.n}</span>
-                <span className="step-t">
-                  {s.t}
-                  <span className="step-w">{s.w}</span>
-                </span>
-                <span className="step-r">
-                  {gone ? <span className="gonetag">Removed</span> : null}
-                  <span className="caret" aria-hidden="true">
-                    &#9656;
-                  </span>
-                </span>
-              </button>
-              {isOpen ? (
-                <div className="step-body">
-                  <p>{s.d}</p>
-                  {proposed && (gone || s.why) ? (
-                    <p className={`step-change ${gone ? "gone" : "kept"}`}>
-                      <strong>
-                        {gone ? "This step disappears. " : "What changes: "}
-                      </strong>
-                      {s.why ?? "Nothing in the new process needs it."}
-                    </p>
-                  ) : null}
-                  <div className="chips">
-                    {s.c.map(([label, tone]) => (
-                      <span key={label} className={`chip ${tone}`}>
-                        {label}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
-            </div>
-          );
-        })}
-      </div>
-    </>
-  );
-}
-
-/** Follow one caravan. Twelve stages, forward, back, or tap the track. */
-function VanPlayer() {
-  const [i, setI] = useState(0);
-  const [name, detail, livesIn, handledBy, reEntry] = VAN[i];
-  const last = VAN.length - 1;
-  return (
-    <div className="van">
-      <div className="van-top">
-        <div className="van-id">
-          Unit 78412 · stage {i + 1} of {VAN.length}
-          <small>Example unit</small>
-        </div>
-        <div className="van-ctl">
-          <button
-            type="button"
-            onClick={() => setI((n) => Math.max(0, n - 1))}
-            disabled={i === 0}
-            aria-label="Previous stage"
-          >
-            &#8592;
-          </button>
-          <button
-            type="button"
-            onClick={() => setI((n) => Math.min(last, n + 1))}
-            disabled={i === last}
-            aria-label="Next stage"
-          >
-            &#8594;
-          </button>
-        </div>
-      </div>
-      <div className="track">
-        {VAN.map(([s], n) => (
-          <button
-            key={s}
-            type="button"
-            className={`tick${n < i ? " done" : ""}${n === i ? " now" : ""}`}
-            onClick={() => setI(n)}
-            aria-label={`${n + 1}. ${s}`}
-            aria-current={n === i ? "step" : undefined}
-          />
-        ))}
-      </div>
-      <div aria-live="polite">
-        <p className="van-stage">{name}</p>
-        <p className="van-desc">{detail}</p>
-        <dl className="van-meta">
-          <div>
-            <dt>Lives in</dt>
-            <dd>{livesIn}</dd>
-          </div>
-          <div>
-            <dt>Handled by</dt>
-            <dd>{handledBy}</dd>
-          </div>
-          <div>
-            <dt>Re-entry points</dt>
-            <dd
-              style={{
-                color: reEntry === "0" ? "var(--color-moss)" : "var(--color-flag)",
-              }}
-            >
-              {reEntry}
-            </dd>
-          </div>
-        </dl>
-      </div>
-    </div>
-  );
-}
-
-function FlowMap() {
-  const graph = useMemo(() => flowGraph(null), []);
-  return <NodeMap3D graph={graph} height={320} />;
-}
-
-function UnitMap() {
-  const graph = useMemo(() => unitGraph(), []);
-  return <NodeMap3D graph={graph} height={320} />;
-}
-
-function HandoffList() {
-  return (
-    <ol className="hl">
-      {HANDOFFS.map(([t, d]) => (
-        <li key={t}>
-          <span>
-            <b>{t}</b>
-            <span>{d}</span>
-          </span>
-        </li>
-      ))}
-    </ol>
-  );
-}
-
-function Table({
-  cols,
-  rows,
-}: {
-  cols: string[];
-  rows: (readonly string[])[];
-}) {
+function Table({ cols, rows }: { cols: string[]; rows: (readonly string[])[] }) {
   return (
     <div className="tw" tabIndex={0} role="region" aria-label={cols.join(", ")}>
       <table>
@@ -275,40 +98,170 @@ function Table({
   );
 }
 
+function StepList() {
+  const [proposed, setProposed] = useState(false);
+  const [open, setOpen] = useState<number | null>(null);
+  return (
+    <>
+      <div className="tgl inline" role="group" aria-label="Mode">
+        <button type="button" aria-pressed={!proposed} onClick={() => setProposed(false)}>
+          Today
+        </button>
+        <button type="button" aria-pressed={proposed} onClick={() => setProposed(true)}>
+          Proposed
+        </button>
+      </div>
+      <div className="steps">
+        {STEPS.map((s) => {
+          const gone = proposed && !s.keep;
+          const isOpen = open === s.n;
+          return (
+            <div key={s.n} className={`step${isOpen ? " open" : ""}${gone ? " gone" : ""}`}>
+              <button
+                type="button"
+                className="step-btn"
+                aria-expanded={isOpen}
+                onClick={() => setOpen(isOpen ? null : s.n)}
+              >
+                <span className="step-n">{s.n < 10 ? `0${s.n}` : s.n}</span>
+                <span className="step-t">
+                  {s.t}
+                  <span className="step-w">{s.w}</span>
+                </span>
+                <span className="step-r">
+                  {gone ? <span className="gonetag">Removed</span> : null}
+                  <span className="caret" aria-hidden="true">
+                    &#9656;
+                  </span>
+                </span>
+              </button>
+              {isOpen ? (
+                <div className="step-body">
+                  <p>{s.d}</p>
+                  {proposed && (gone || s.why) ? (
+                    <p className={`step-change ${gone ? "gone" : "kept"}`}>
+                      <strong>{gone ? "This step disappears. " : "What changes: "}</strong>
+                      {s.why ?? "Nothing in the new process needs it."}
+                    </p>
+                  ) : null}
+                  <div className="chips">
+                    {s.c.map(([label, tone]) => (
+                      <span key={label} className={`chip ${tone}`}>
+                        {label}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          );
+        })}
+      </div>
+    </>
+  );
+}
+
+function VanPlayer() {
+  const [i, setI] = useState(0);
+  const [name, detail, livesIn, handledBy, reEntry] = VAN[i];
+  const last = VAN.length - 1;
+  return (
+    <div className="van">
+      <div className="track">
+        {VAN.map(([s], n) => (
+          <button
+            key={s}
+            type="button"
+            className={`tick${n < i ? " done" : ""}${n === i ? " now" : ""}`}
+            onClick={() => setI(n)}
+            aria-label={`${n + 1}. ${s}`}
+            aria-current={n === i ? "step" : undefined}
+          />
+        ))}
+      </div>
+      <div aria-live="polite" className="van-main">
+        <p className="van-stage">{name}</p>
+        <p className="van-desc">{detail}</p>
+        <dl className="van-meta">
+          <div>
+            <dt>Lives in</dt>
+            <dd>{livesIn}</dd>
+          </div>
+          <div>
+            <dt>Handled by</dt>
+            <dd>{handledBy}</dd>
+          </div>
+          <div>
+            <dt>Re-entry points</dt>
+            <dd style={{ color: reEntry === "0" ? "var(--color-moss)" : "var(--color-flag)" }}>
+              {reEntry}
+            </dd>
+          </div>
+        </dl>
+      </div>
+      <div className="van-ctl">
+        <button
+          type="button"
+          onClick={() => setI((n) => Math.max(0, n - 1))}
+          disabled={i === 0}
+          aria-label="Previous stage"
+        >
+          &#8592;
+        </button>
+        <span className="van-id">
+          Unit 78412 · {i + 1} of {VAN.length}
+        </span>
+        <button
+          type="button"
+          onClick={() => setI((n) => Math.min(last, n + 1))}
+          disabled={i === last}
+          aria-label="Next stage"
+        >
+          &#8594;
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function UnitMap() {
+  const graph = useMemo(() => unitGraph(), []);
+  return <NodeMap3D graph={graph} fill />;
+}
+
+function FlowMap() {
+  const graph = useMemo(() => flowGraph(null), []);
+  return <NodeMap3D graph={graph} fill />;
+}
+
 /* --------------------------------------------------------------- slides */
 
 export const SLIDES: Slide[] = [
   {
     id: "cover",
     chapter: "operations",
-    title: "One caravan, and nowhere to look it up.",
-    standfirst:
-      "We spent a day at the order desk in Hull and followed an order from a dealer through to an invoice. This is what we found, and what we would build instead.",
+    title: "One caravan. Nowhere to look it up.",
+    line: "A day at the order desk in Hull. Here is what we found.",
     body: () => (
-      <>
-        <Big
-          items={[
-            { n: "16", l: "steps to get one caravan out" },
-            { n: "20", l: "points the same work is done twice", tone: "flag" },
-            { n: "14", l: "places hold a piece of one van", tone: "flag" },
-            { n: "3", l: "seasons before the record is gone", tone: "flag" },
-          ]}
-        />
-        <p className="hint">
-          Swipe, or use the arrows below. Anything with a number behind it has
-          the evidence one tap away.
-        </p>
-      </>
+      <Big
+        items={[
+          { n: "16", l: "steps to get one caravan out" },
+          { n: "20", l: "points the same work is done twice", tone: "flag" },
+          { n: "14", l: "places hold a piece of one van", tone: "flag" },
+          { n: "3", l: "seasons before the record is gone", tone: "flag" },
+        ]}
+      />
     ),
+    aside: () => <p className="hint">Arrow keys, or swipe. Every claim has its evidence one click away.</p>,
     footnote: "Recorded on site, 3 September 2026",
   },
   {
     id: "unit",
     chapter: "operations",
-    title: "Where does one caravan actually live?",
-    standfirst:
-      "In fourteen places at once, and none of them is the caravan. Drag it around. Tap anything to see what it holds.",
+    title: "Where does one caravan live?",
+    line: "In fourteen places at once. None of them is the caravan.",
     body: () => <UnitMap />,
+    aside: () => <p className="hint">Drag to turn it. Click anything to see what it holds.</p>,
     detailLabel: "What the business runs on",
     detail: () => (
       <>
@@ -331,27 +284,51 @@ export const SLIDES: Slide[] = [
     ),
   },
   {
-    id: "flow",
+    id: "sim",
     chapter: "operations",
-    title: "Sixteen steps, and five of them only move paper.",
-    standfirst:
-      "Every dashed link is a place the information leaves the system and has to be typed back in. Turn it to see where the trail keeps breaking.",
-    body: () => <FlowMap />,
-    detailLabel: "All sixteen steps",
-    detail: () => <StepList />,
+    title: "Run the season.",
+    line: "Press play. Nobody needs telling where it jams.",
+    body: () => <FlowSim />,
+    aside: () => (
+      <p className="hint">
+        Each station takes as long as the re-entry points counted inside it.
+        Switch to Proposed and run the same orders again.
+      </p>
+    ),
+    detailLabel: "How this is worked out",
+    detail: () => (
+      <>
+        <p>
+          Every station is a single queue. A caravan holds it for as long as that
+          station costs, and anything behind it waits.
+        </p>
+        <p>
+          <strong>The one modelled number is how long a station takes.</strong>{" "}
+          It is set to the number of re-entry points counted inside that step,
+          plus one for the work itself. Those counts come straight off the
+          process record. Turning re-entry points into time is our doing, not
+          something anyone said, because nobody was timed on the day. So the
+          shape of the jam is evidence. The exact tick count is not.
+        </p>
+        <p>
+          Invoicing carries five of the twenty, which is why it is the station
+          that backs up first.
+        </p>
+        <StepList />
+      </>
+    ),
   },
   {
     id: "handoffs",
     chapter: "operations",
-    title: "Twenty times, the same work gets done again.",
-    standfirst:
-      "Not twenty inefficiencies in general terms. Twenty specific, nameable ones, counted straight off the process.",
+    title: "Twenty times, the same work.",
+    line: "Not twenty inefficiencies in general. Twenty nameable ones.",
     body: () => (
       <>
         <Big
           items={[
             { n: "20", l: "re-entry points", tone: "flag" },
-            { n: "5", l: "of them in invoicing alone", tone: "flag" },
+            { n: "5", l: "in invoicing alone", tone: "flag" },
             { n: "4,000", l: "sheets of paper a year", tone: "flag" },
           ]}
         />
@@ -362,23 +339,42 @@ export const SLIDES: Slide[] = [
       </>
     ),
     detailLabel: "All twenty, in order",
-    detail: () => <HandoffList />,
+    detail: () => (
+      <ol className="hl">
+        {HANDOFFS.map(([t, d]) => (
+          <li key={t}>
+            <span>
+              <b>{t}</b>
+              <span>{d}</span>
+            </span>
+          </li>
+        ))}
+      </ol>
+    ),
+  },
+  {
+    id: "flowmap",
+    chapter: "operations",
+    title: "Where the trail keeps breaking.",
+    line: "Every dashed link is information leaving the system by hand.",
+    body: () => <FlowMap />,
+    aside: () => <p className="hint">Drag to turn it. Bigger means more re-entry inside that step.</p>,
+    detailLabel: "All sixteen steps",
+    detail: () => <StepList />,
   },
   {
     id: "van",
     chapter: "operations",
-    title: "Follow one caravan the whole way.",
-    standfirst:
-      "Same unit, twelve stages, from a batch number to a line in a handwritten book.",
+    title: "Follow one caravan.",
+    line: "From a batch number to a line in a handwritten book.",
     body: () => <VanPlayer />,
-    footnote: "Tap the track to jump",
+    footnote: "Click the track to jump",
   },
   {
     id: "people",
     chapter: "leadership",
-    title: `One desk holds ${word(HEAVIEST.steps.length)} of the ${word(TOTAL_STEPS)} steps.`,
-    standfirst:
-      "Bigger means more of the process on one pair of hands. The dashed threads are partial cover: somebody could do it, but not often enough to be quick.",
+    title: `One desk holds ${word(HEAVIEST.steps.length)} of ${word(TOTAL_STEPS)}.`,
+    line: "Take someone out and watch the work move, or stop.",
     body: () => <PeopleModel />,
     detailLabel: "Who holds what, and why we say so",
     detail: () => (
@@ -407,62 +403,51 @@ export const SLIDES: Slide[] = [
     ),
   },
   {
-    id: "absence",
+    id: "nocover",
     chapter: "leadership",
-    title: `${word(NO_COVER_STEPS.length).replace(/^t/, "T")} steps have nobody else at all.`,
-    standfirst:
-      "Invoicing, emailing the invoices out, and the book. Mark someone away above and the work either moves onto somebody who already has a full desk, or it stops.",
+    title: `${word(NO_COVER_STEPS.length).replace(/^t/, "T")} steps have nobody else.`,
+    line: "Invoicing, sending the invoices, and the book.",
     body: () => (
       <>
         <Big
           items={[
-            {
-              n: String(NO_COVER_STEPS.length),
-              l: "steps with no cover",
-              tone: "flag",
-            },
-            {
-              n: String(HEAVIEST.steps.length),
-              l: `of ${TOTAL_STEPS} steps on one desk`,
-              tone: "flag",
-            },
+            { n: String(NO_COVER_STEPS.length), l: "steps with no cover at all", tone: "flag" },
+            { n: String(HEAVIEST.steps.length), l: `of ${TOTAL_STEPS} steps on one desk`, tone: "flag" },
             { n: "2", l: "people can get into the system", tone: "brass" },
           ]}
         />
-        <Quote
-          text="She can never really go on holiday."
-          cite="Said in the room, about invoicing"
-        />
-        <p>
-          Attempts to train others have not stuck, because it is not done often
-          enough by anyone else to build confidence, and everyone else is already
-          stretched. This is not a training problem to solve with a document. The
-          process is too intricate to hand over safely in its current form.
-        </p>
+        <Quote text="She can never really go on holiday." cite="Said in the room, about invoicing" />
       </>
     ),
     detailLabel: "The steps with no cover",
     detail: () => (
-      <ul className="pl n">
-        {NO_COVER_STEPS.map((s) => {
-          const a = ASSIGNMENTS.find((x) => x.stepId === s);
-          return (
-            <li key={s}>
-              <span>
-                <strong>{stepTitle(s)}.</strong> {a?.because}
-              </span>
-            </li>
-          );
-        })}
-      </ul>
+      <>
+        <p>
+          Attempts to train others have not stuck, because it is not done often
+          enough by anyone else to build confidence, and everyone else is
+          already stretched. This is not a training problem to solve with a
+          document.
+        </p>
+        <ul className="pl n">
+          {NO_COVER_STEPS.map((s) => {
+            const a = ASSIGNMENTS.find((x) => x.stepId === s);
+            return (
+              <li key={s}>
+                <span>
+                  <strong>{stepTitle(s)}.</strong> {a?.because}
+                </span>
+              </li>
+            );
+          })}
+        </ul>
+      </>
     ),
   },
   {
     id: "capacity",
     chapter: "leadership",
-    title: "Add caravans and watch which ceiling you hit.",
-    standfirst:
-      "Add a production line and the factory can take more. The order desk cannot, because it is two people and a system that already falls over. Try it.",
+    title: "Add caravans. Find the ceiling.",
+    line: "The factory scales with lines. The order desk does not.",
     body: () => <CapacityModel />,
     detailLabel: "The risks, in order",
     detail: () => (
@@ -485,20 +470,19 @@ export const SLIDES: Slide[] = [
   {
     id: "hours",
     chapter: "leadership",
-    title: "What the manual work costs, on your numbers.",
-    standfirst:
-      "Built from the volumes given on the day. Move the minutes to whatever feels right and the totals follow. Nothing is assumed on your behalf.",
+    title: "What the manual work costs.",
+    line: "Your volumes. Move the minutes and the totals follow.",
     body: () => <HoursModel />,
     footnote: "Their own estimate was about 20%",
   },
   {
     id: "faults",
     chapter: "leadership",
-    title: "Four things are broken, not missing.",
-    standfirst:
-      "A missing feature is a decision about what to build. A broken one costs time every day and has already been paid for.",
+    title: "Four things are broken.",
+    line: "Not missing. Broken, and already paid for.",
+    wide: true,
     body: () => (
-      <div className="cards">
+      <div className="cards two">
         {FAULTS.map(([n, tag, d, c]) => (
           <div className="card f" key={n}>
             <p className="card-t">{n}</p>
@@ -518,30 +502,26 @@ export const SLIDES: Slide[] = [
     id: "stages",
     chapter: "technical",
     title: "Twelve stages, not sixteen steps.",
-    standfirst:
-      "Five of their steps exist only to move paper between systems that cannot talk to each other. Those are not stages in building a caravan, so they do not get rebuilt.",
+    line: "Five of theirs exist only to move paper. Those go.",
     body: () => (
-      <>
-        <Big
-          items={[
-            { n: "16", l: "steps today" },
-            { n: "12", l: "stages proposed", tone: "moss" },
-            { n: "0", l: "re-entry points", tone: "moss" },
-          ]}
-        />
-        <Table
-          cols={["Stage", "What it means"]}
-          rows={STAGES.map(([n, m], i) => [`${i + 1}. ${n}`, m])}
-        />
-      </>
+      <Table cols={["Stage", "What it means"]} rows={STAGES.map(([n, m], i) => [`${i + 1}. ${n}`, m])} />
+    ),
+    aside: () => (
+      <Big
+        items={[
+          { n: "16", l: "steps today" },
+          { n: "12", l: "stages proposed", tone: "moss" },
+          { n: "0", l: "re-entry points", tone: "moss" },
+        ]}
+      />
     ),
   },
   {
     id: "decisions",
     chapter: "technical",
     title: "Three decisions carry the weight.",
-    standfirst:
-      "Built as a product for this kind of manufacturer, with Coachman as the first customer.",
+    line: "A product for this kind of manufacturer. Coachman first.",
+    wide: true,
     body: () => (
       <div className="dec">
         {TECH.decisions.rows.map((d) => (
@@ -576,35 +556,31 @@ export const SLIDES: Slide[] = [
     id: "ask",
     chapter: "technical",
     title: "What we need from you.",
-    standfirst:
-      "The easy wins are genuinely easy. The hard part is understanding the routes people take through their work well enough to redesign them without breaking what already works.",
+    line: "Five things, and one decision.",
     body: () => (
-      <>
-        <ul className="pl q">
-          <li>
-            <span>The pack: screens, the reports and spreadsheets in use, example documents.</span>
-          </li>
-          <li>
-            <span>
-              Access to the current system, and a copy of it so nothing is ever
-              tested on live dealer data.
-            </span>
-          </li>
-          <li>
-            <span>Build times per model, the working week, and this season&rsquo;s shutdown dates.</span>
-          </li>
-          <li>
-            <span>Confirmation of which accounts system version is in use.</span>
-          </li>
-          <li>
-            <span>A decision on committing to the 2027 season as the changeover.</span>
-          </li>
-        </ul>
-        <Quote
-          text="We are building a car. Get the shell in first, then the suspension and the intricate bits come later."
-          cite="Said in the room"
-        />
-      </>
+      <ul className="pl q big">
+        <li>
+          <span>The pack: screens, reports, spreadsheets, example documents.</span>
+        </li>
+        <li>
+          <span>Access to the current system, and a copy to work against.</span>
+        </li>
+        <li>
+          <span>Build times per model, the working week, shutdown dates.</span>
+        </li>
+        <li>
+          <span>Which accounts system version is in use.</span>
+        </li>
+        <li>
+          <span>A decision on the 2027 season as the changeover.</span>
+        </li>
+      </ul>
+    ),
+    aside: () => (
+      <Quote
+        text="We are building a car. Get the shell in first, then the suspension and the intricate bits come later."
+        cite="Said in the room"
+      />
     ),
     detailLabel: "Still to settle",
     detail: () => (
