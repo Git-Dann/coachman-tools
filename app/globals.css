@@ -1973,9 +1973,22 @@ body {
 }
 .ms-main,
 .ms-side {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 14px;
-  align-content: start;
+  min-height: 0;
+}
+/* The picture side stretches so a map fills the room it is given. */
+.model-split > .ms-main {
+  justify-content: flex-start;
+}
+.model-split > .ms-main > .map.fill {
+  flex: 1 1 auto;
+}
+@media (min-width: 1000px) {
+  .model-split > .ms-main > .map.fill .map-canvas {
+    min-height: 340px;
+  }
 }
 
 /* --------------------------------------------------------- van player */

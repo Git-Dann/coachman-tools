@@ -79,8 +79,9 @@ export function peopleGraph(impact: Impact): Graph {
       tone: away ? "muted" : extra > 0 ? "flag" : uncovered ? "brass" : "steel",
       kind: "person",
       faded: away,
-      // Always label the heaviest desk, and anyone picking work up.
-      pinned: extra > 0 || total === max,
+      // Always label the heaviest desk, anyone picking work up, and whoever
+      // is missing: the gap is the point of the picture.
+      pinned: away || extra > 0 || total === max,
     };
   });
 

@@ -35,7 +35,7 @@ export function PeopleModel({ withMap = true }: { withMap?: boolean }) {
   return (
     <div className="model-block model-split">
       <div className="ms-main">
-        {withMap ? <NodeMap3D graph={graph} height={330} /> : null}
+        {withMap ? <NodeMap3D graph={graph} fill /> : null}
       </div>
 
       <div className="ms-side">

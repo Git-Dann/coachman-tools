@@ -80,7 +80,9 @@ export function NodeMap3D({
       const g = graphRef.current;
       if (spin.current && !reduced) rot.current.yaw += 0.0022;
 
-      const radius = Math.min(w, h) * 0.33;
+      // Lean on the shorter side but not too timidly, or the graph
+      // sits in a small island in the middle of a big frame.
+      const radius = Math.min(w * 0.30, h * 0.40);
       const p = project(g.nodes, rot.current.yaw, rot.current.pitch, w, h, radius);
       projRef.current = p;
       const at = new Map(p.map((q) => [q.node.id, q]));
@@ -163,19 +165,39 @@ export function NodeMap3D({
 
         // Keep the whole label on the canvas, never clipped at an edge.
         const x = Math.max(tw / 2 + 4, Math.min(w - tw / 2 - 4, q.sx));
-        const y = q.sy + q.r + 12;
-        if (y > h - 4) continue;
 
-        const box = { x1: x - tw / 2 - 3, y1: y - size, x2: x + tw / 2 + 3, y2: y + 4 };
-        const clash = placed.some(
-          (b) => box.x1 < b.x2 && box.x2 > b.x1 && box.y1 < b.y2 && box.y2 > b.y1,
-        );
-        if (clash && !isSel) continue;
+        // Try under the node first, then over it. A label that will not fit
+        // either way is dropped rather than stacked on top of its neighbour.
+        // Nothing is lost: every node is clickable, and listed underneath.
+        const boxAt = (yy: number) => ({
+          x1: x - tw / 2 - 5,
+          y1: yy - size - 4,
+          x2: x + tw / 2 + 5,
+          y2: yy + 8,
+        });
+        const clashes = (bx: ReturnType<typeof boxAt>) =>
+          placed.some(
+            (b) => bx.x1 < b.x2 && bx.x2 > b.x1 && bx.y1 < b.y2 && bx.y2 > b.y1,
+          );
+
+        let y = q.sy + q.r + 12;
+        let box = boxAt(y);
+        if (clashes(box) || y > h - 4) {
+          const up = q.sy - q.r - 7;
+          const upBox = boxAt(up);
+          if (!clashes(upBox) && up > size + 4) {
+            y = up;
+            box = upBox;
+          } else if (!isSel) {
+            continue;
+          }
+        }
         placed.push(box);
 
         const alpha = Math.max(0.25, Math.min(1, (q.k - 0.55) * 1.9));
         ctx.save();
-        ctx.globalAlpha = n.faded ? alpha * 0.5 : Math.min(1, alpha + 0.15);
+        // Whoever is missing still has to be readable: the gap is the point.
+        ctx.globalAlpha = n.faded ? Math.max(0.6, alpha * 0.8) : Math.min(1, alpha + 0.15);
         // A thin halo in the page colour keeps text off the links behind it.
         ctx.lineWidth = 3;
         ctx.strokeStyle = "#0C1116";
