@@ -221,9 +221,11 @@ export function SeasonSim() {
     /* -------------------------------------------------------- caravans */
     const vanGeo = caravanGeometry();
     const vanMat = new THREE.MeshStandardMaterial({
-      color: 0xe9eff3,
-      roughness: 0.42,
-      metalness: 0.08,
+      // Vertex colours carry the glass, tyres and drawbar; the per-instance
+      // colour then tints only the white bodywork.
+      vertexColors: true,
+      roughness: 0.45,
+      metalness: 0.05,
     });
     const vans = new THREE.InstancedMesh(vanGeo, vanMat, MAX_VANS);
     vans.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
@@ -324,7 +326,14 @@ export function SeasonSim() {
 
       /* Ease a slot towards where it should be. A slot that has just come into
          use starts at its target, so nothing flies in from the origin. */
-      const place = (slot: number, x: number, y: number, z: number, sc: number) => {
+      const place = (
+        slot: number,
+        x: number,
+        y: number,
+        z: number,
+        sc: number,
+        rotY: number,
+      ) => {
         const o = slot * 3;
         if (!seeded[slot]) {
           cur[o] = x;
@@ -338,7 +347,7 @@ export function SeasonSim() {
           cur[o + 2] += (z - cur[o + 2]) * e;
         }
         dummy.position.set(cur[o], cur[o + 1], cur[o + 2]);
-        dummy.rotation.set(0, 0, 0);
+        dummy.rotation.set(0, rotY, 0);
         dummy.scale.setScalar(sc);
         dummy.updateMatrix();
         vans.setMatrixAt(slot, dummy.matrix);
@@ -351,20 +360,30 @@ export function SeasonSim() {
         if (!p) continue;
 
         if (sim.active[i]) {
-          place(n, p.x, 0.12, p.z, 1);
-          col.setHex(PALETTE.moss);
+          place(n, p.x, 0, p.z, 1.12, 0);
+          col.setHex(0xf2f6f8);
           vans.setColorAt(n, col);
           n++;
         }
 
-        // The queue, physically piled up behind the station.
-        const q = Math.min(sim.queue[i], 26);
+        /*
+         * The queue: caravans parked up behind the station, three abreast and
+         * turned across the line so a long pile stays compact enough to see.
+         */
+        const q = Math.min(sim.queue[i], 30);
         for (let k = 0; k < q && n < MAX_VANS; k++) {
-          const row = Math.floor(k / 2);
-          const side = k % 2 === 0 ? -1 : 1;
-          place(n, p.x - 1.9 - row * 1.05, 0.12, p.z + side * 0.62, 0.92);
-          // Deeper in the queue reads hotter: it has been waiting longer.
-          col.setHex(row > 5 ? PALETTE.flag : row > 2 ? PALETTE.brass : 0x9dafba);
+          const row = Math.floor(k / 3);
+          const lane = (k % 3) - 1;
+          place(
+            n,
+            p.x - 2.4 - row * 1.05,
+            0,
+            p.z + lane * 1.2,
+            0.98,
+            Math.PI / 2,
+          );
+          // Further back means it has been sitting there longer.
+          col.setHex(row > 5 ? PALETTE.flag : row > 2 ? PALETTE.brass : 0xdfe8ee);
           vans.setColorAt(n, col);
           n++;
         }
@@ -395,10 +414,10 @@ export function SeasonSim() {
 
       if (!reduced && !userMoved) yaw += 0.0006;
       // Framed so the whole line stays inside the viewport at any yaw.
-      const dist = 24;
+      const dist = 23.5;
       camera.position.set(
         Math.sin(yaw) * dist,
-        11,
+        10.6,
         Math.cos(yaw) * dist + 1,
       );
       camera.lookAt(0, 1.4, 0);

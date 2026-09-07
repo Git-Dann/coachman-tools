@@ -19,51 +19,126 @@ export const PALETTE = {
   dim: 0x35424e,
 };
 
-/** A caravan: a body, a slightly darker roof, and a drawbar. Read at a glance. */
+/**
+ * A caravan.
+ *
+ * The silhouette is what makes it read at a glance, so the body is a real side
+ * profile extruded across the width: square at the back, a gentle roof, and the
+ * sloped nose a touring caravan actually has. Then a window band, a wheel each
+ * side and an A-frame at the front.
+ *
+ * It all merges into one geometry carrying vertex colours, so the whole fleet
+ * draws as a single instanced mesh. The body is left white so the per-instance
+ * colour tints it, while the glass, tyres and drawbar keep their own dark
+ * values and stay dark whatever the caravan is tinted.
+ */
 export function caravanGeometry(): THREE.BufferGeometry {
-  const body = new THREE.BoxGeometry(1.5, 0.78, 0.86);
-  body.translate(0, 0.52, 0);
+  const W = 0.78; // width
+  const FLOOR = 0.34;
+  const ROOF = 1.18;
+  const NOSE = 0.85;
+  const TAIL = -0.85;
 
-  const roof = new THREE.BoxGeometry(1.32, 0.16, 0.72);
-  roof.translate(0, 0.98, 0);
+  const profile = new THREE.Shape();
+  profile.moveTo(TAIL, FLOOR);
+  profile.lineTo(TAIL, ROOF - 0.16);
+  profile.quadraticCurveTo(TAIL, ROOF, TAIL + 0.16, ROOF);
+  profile.quadraticCurveTo(0, ROOF + 0.05, NOSE - 0.46, ROOF);
+  // the sloped front, pronounced enough to read at a distance
+  profile.quadraticCurveTo(NOSE - 0.06, ROOF - 0.02, NOSE, ROOF - 0.52);
+  profile.lineTo(NOSE, FLOOR + 0.06);
+  profile.quadraticCurveTo(NOSE, FLOOR, NOSE - 0.08, FLOOR);
+  profile.lineTo(TAIL, FLOOR);
 
-  const bar = new THREE.BoxGeometry(0.5, 0.08, 0.08);
-  bar.translate(-0.98, 0.28, 0);
+  const body = new THREE.ExtrudeGeometry(profile, {
+    depth: W,
+    bevelEnabled: true,
+    bevelSize: 0.03,
+    bevelThickness: 0.03,
+    bevelSegments: 2,
+    curveSegments: 6,
+  });
+  body.translate(0, 0, -W / 2);
+  body.computeVertexNormals();
 
-  const merged = mergeGeometries([body, roof, bar]);
-  body.dispose();
-  roof.dispose();
-  bar.dispose();
+  const parts: { geo: THREE.BufferGeometry; colour: [number, number, number] }[] =
+    [{ geo: body, colour: [1, 1, 1] }];
+
+  /*
+   * Window band, one each side. It has to clear the bevel: the extrusion
+   * pushes the wall 0.03 proud of W/2, so anything closer than that is buried
+   * inside the bodywork and never seen.
+   */
+  for (const side of [-1, 1]) {
+    const win = new THREE.BoxGeometry(0.86, 0.27, 0.02);
+    win.translate(-0.06, 0.9, side * (W / 2 + 0.05));
+    parts.push({ geo: win, colour: [0.07, 0.1, 0.13] });
+  }
+
+  // a door, so the side is not a blank slab
+  for (const side of [-1, 1]) {
+    const door = new THREE.BoxGeometry(0.03, 0.46, 0.02);
+    door.translate(0.42, 0.63, side * (W / 2 + 0.05));
+    parts.push({ geo: door, colour: [0.55, 0.6, 0.64] });
+  }
+
+  // one wheel each side, on a single axle set back a little
+  for (const side of [-1, 1]) {
+    const wheel = new THREE.CylinderGeometry(0.2, 0.2, 0.09, 14);
+    wheel.rotateX(Math.PI / 2);
+    wheel.translate(-0.06, 0.2, side * (W / 2 + 0.02));
+    parts.push({ geo: wheel, colour: [0.08, 0.1, 0.12] });
+  }
+
+  // the A-frame drawbar reaching out in front
+  const bar = new THREE.BoxGeometry(0.46, 0.07, 0.07);
+  bar.translate(NOSE + 0.2, FLOOR + 0.02, 0);
+  parts.push({ geo: bar, colour: [0.3, 0.34, 0.38] });
+
+  const merged = mergeWithColours(parts);
+  for (const p of parts) p.geo.dispose();
   return merged;
 }
 
-/** Minimal merge, so we do not pull in the whole BufferGeometryUtils module. */
-function mergeGeometries(list: THREE.BufferGeometry[]): THREE.BufferGeometry {
+/**
+ * Merge a handful of geometries, baking a colour into each one's vertices.
+ * Small and local, so we do not pull in the whole BufferGeometryUtils module
+ * for four boxes and an extrusion.
+ */
+function mergeWithColours(
+  parts: { geo: THREE.BufferGeometry; colour: [number, number, number] }[],
+): THREE.BufferGeometry {
+  const nonIndexed = parts.map((p) => ({
+    geo: p.geo.index ? p.geo.toNonIndexed() : p.geo,
+    colour: p.colour,
+    owned: Boolean(p.geo.index),
+  }));
+
+  let count = 0;
+  for (const p of nonIndexed) count += p.geo.attributes.position.count;
+
+  const pos = new Float32Array(count * 3);
+  const nrm = new Float32Array(count * 3);
+  const col = new Float32Array(count * 3);
+
+  let o = 0;
+  for (const p of nonIndexed) {
+    const n = p.geo.attributes.position.count;
+    pos.set(p.geo.attributes.position.array as ArrayLike<number>, o * 3);
+    nrm.set(p.geo.attributes.normal.array as ArrayLike<number>, o * 3);
+    for (let i = 0; i < n; i++) {
+      col[(o + i) * 3] = p.colour[0];
+      col[(o + i) * 3 + 1] = p.colour[1];
+      col[(o + i) * 3 + 2] = p.colour[2];
+    }
+    o += n;
+    if (p.owned) p.geo.dispose();
+  }
+
   const out = new THREE.BufferGeometry();
-  let vCount = 0;
-  let iCount = 0;
-  for (const g of list) {
-    vCount += g.attributes.position.count;
-    iCount += g.index ? g.index.count : 0;
-  }
-  const pos = new Float32Array(vCount * 3);
-  const nrm = new Float32Array(vCount * 3);
-  const idx = new Uint16Array(iCount);
-  let vo = 0;
-  let io = 0;
-  for (const g of list) {
-    const p = g.attributes.position.array as ArrayLike<number>;
-    const nAttr = g.attributes.normal.array as ArrayLike<number>;
-    pos.set(p, vo * 3);
-    nrm.set(nAttr, vo * 3);
-    const gi = g.index!;
-    for (let i = 0; i < gi.count; i++) idx[io + i] = gi.getX(i) + vo;
-    vo += g.attributes.position.count;
-    io += gi.count;
-  }
   out.setAttribute("position", new THREE.BufferAttribute(pos, 3));
   out.setAttribute("normal", new THREE.BufferAttribute(nrm, 3));
-  out.setIndex(new THREE.BufferAttribute(idx, 1));
+  out.setAttribute("color", new THREE.BufferAttribute(col, 3));
   return out;
 }
 
