@@ -17,6 +17,7 @@ import { VAN } from "./van";
 import { SYSTEMS, ACCESS_NOTES } from "./systems";
 import { ASSIGNMENTS, PEOPLE, PEOPLE_CAVEAT } from "./people";
 import { HEAVIEST, NO_COVER_STEPS, TOTAL_STEPS, stepTitle, word } from "@/lib/model";
+import { HUB_CAVEAT } from "@/lib/hub";
 import { TECH } from "./copy";
 
 export type ChapterId = "operations" | "leadership" | "technical";
@@ -322,6 +323,7 @@ export const SLIDES: Slide[] = [
           the hours can just about be absorbed; it is the software that is
           unstable. Past double, the hours stop adding up as well.
         </p>
+        <p className="caveat">{HUB_CAVEAT}</p>
         <StepList />
       </>
     ),

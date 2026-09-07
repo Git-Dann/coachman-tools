@@ -187,7 +187,7 @@ export function labelSprite(
     depthWrite: false,
   });
   const s = new THREE.Sprite(mat);
-  s.scale.set((w / 64) * 0.66, 0.66, 1);
+  s.scale.set((w / 64) * 0.86, 0.86, 1);
   return s;
 }
 

@@ -141,7 +141,7 @@ export function Deck({ start }: { start: ChapterId }) {
         </button>
 
         <span className="dbtn wide ghost">
-          {slide.footnote ?? "Arrow keys to move · click the rail to jump"}
+          {slide.footnote ?? (i === 0 ? "Arrow keys to move · click the rail to jump" : slide.title)}
         </span>
 
         <button

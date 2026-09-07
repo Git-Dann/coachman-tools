@@ -9,7 +9,6 @@ import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass.js";
 import { PALETTE, caravanGeometry, glowTexture, labelSprite } from "@/lib/scene";
 import {
   DESK_PEOPLE,
-  HUB_CAVEAT,
   UNITS_PER_STEP,
   heat,
   heatColour,
@@ -84,8 +83,8 @@ export function HubSim({ mode }: { mode: Mode }) {
     const rim = new THREE.DirectionalLight(0x74a8c4, 0.5);
     rim.position.set(14, 6, -14);
     scene.add(rim);
-    const centre = new THREE.PointLight(0xe9eff3, 90, 22, 2);
-    centre.position.set(0, 5.5, 0);
+    const centre = new THREE.PointLight(0xcfe0ea, 26, 20, 2);
+    centre.position.set(0.5, 7, 3);
     scene.add(centre);
 
     const glowTex = glowTexture();
@@ -123,7 +122,7 @@ export function HubSim({ mode }: { mode: Mode }) {
     let links: THREE.Line[] = [];
     let nodeAt: THREE.Vector3[] = [];
 
-    const RADIUS = 10.5;
+    const RADIUS = 9.6;
 
     const buildRing = (js: Job[]) => {
       ring.clear();
@@ -189,8 +188,8 @@ export function HubSim({ mode }: { mode: Mode }) {
         ring.add(glow);
         glows.push(glow);
 
-        const label = labelSprite(job.name, "#C6D3DB");
-        label.position.set(pos.x * 1.16, 0.75, pos.z * 1.16);
+        const label = labelSprite(job.name, "#DCE6EC");
+        label.position.set(pos.x * 1.2, 0.95, pos.z * 1.2);
         ring.add(label);
 
         const link = new THREE.Line(
@@ -278,7 +277,7 @@ export function HubSim({ mode }: { mode: Mode }) {
     ro.observe(mount);
 
     let yaw = 0.5;
-    let pitch = 0.55;
+    let pitch = 0.5;
     let drag: { x: number; y: number } | null = null;
     let touched = false;
     const down = (e: PointerEvent) => {
@@ -304,7 +303,7 @@ export function HubSim({ mode }: { mode: Mode }) {
     const col = new THREE.Color();
     const tint = new THREE.Color();
     let builtFor = -1;
-    let camDist = 30;
+    let camDist = 25.5;
     let raf = 0;
 
     const frame = (t: number) => {
@@ -324,7 +323,7 @@ export function HubSim({ mode }: { mode: Mode }) {
         globeGroup.rotation.y += reduced ? 0 : 0.0016;
         camDist += (22 - camDist) * 0.05;
       } else {
-        camDist += (30 - camDist) * 0.05;
+        camDist += (25.5 - camDist) * 0.05;
 
         /* the fleet in the middle */
         const n = Math.min(st.mult, 12);
@@ -332,11 +331,12 @@ export function HubSim({ mode }: { mode: Mode }) {
           const cols = Math.ceil(Math.sqrt(n));
           const r = Math.floor(i / cols);
           const c = i % cols;
-          const ox = (c - (cols - 1) / 2) * 3.5;
-          const oz = (r - (Math.ceil(n / cols) - 1) / 2) * 2.4;
+          const ox = (c - (cols - 1) / 2) * 3.4;
+          const oz = (r - (Math.ceil(n / cols) - 1) / 2) * 2.3;
           dummy.position.set(ox, 0, oz);
           dummy.rotation.set(0, reduced ? 0 : t * 0.00016, 0);
-          dummy.scale.setScalar(1.15);
+          // A lone caravan is the hero of the picture, so it gets more size.
+          dummy.scale.setScalar(n === 1 ? 1.9 : 1.2);
           dummy.updateMatrix();
           fleet.setMatrixAt(i, dummy.matrix);
           col.setHex(0xf2f6f8);
@@ -502,11 +502,6 @@ export function HubSim({ mode }: { mode: Mode }) {
         <span className="ssim-hint">Drag to look around</span>
       </div>
 
-      <p className="caveat">
-        {proposed
-          ? "Twelve stages with nothing entered twice, so the work per caravan is a minute a stage on the same basis as the other side. Volumes are yours. The minutes are ours, and adjustable. The sites on the globe are illustrative: no second manufacturer exists yet."
-          : HUB_CAVEAT}
-      </p>
     </div>
   );
 }

@@ -1046,12 +1046,12 @@ body {
   width: 100%;
   background: none;
   border: 0;
-  padding: 0 0 5px;
+  padding: 0 0 6px;
   text-align: left;
   cursor: pointer;
   font-family: var(--font-mono);
-  font-size: 9px;
-  letter-spacing: 0.08em;
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--color-text-3);
   white-space: nowrap;
@@ -1067,8 +1067,8 @@ body {
 }
 .tickm {
   flex: 1 1 0;
-  height: 20px;
-  padding: 8px 0 0;
+  height: 22px;
+  padding: 9px 0 0;
   border: 0;
   background: none;
   cursor: pointer;
@@ -1077,7 +1077,7 @@ body {
 .tickm::after {
   content: "";
   display: block;
-  height: 3px;
+  height: 4px;
   border-radius: 2px;
   background: var(--color-surface-3);
 }
@@ -1108,7 +1108,7 @@ body {
 .slide-grid {
   height: 100%;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 360px;
+  grid-template-columns: minmax(0, 1fr) 330px;
   gap: 34px;
   padding: 24px 30px 20px;
   max-width: 1600px;
@@ -2298,10 +2298,13 @@ ul.pl.big li::before {
 .hub-say {
   flex: none;
   margin: 0;
-  font-size: 14.5px;
-  line-height: 1.55;
+  font-size: clamp(15px, 1.35vw, 17.5px);
+  line-height: 1.5;
   color: var(--color-text-2);
-  max-width: 76ch;
+  max-width: 78ch;
+}
+.hub-say b {
+  font-weight: 700;
 }
 .hub-ctl {
   flex: none;
