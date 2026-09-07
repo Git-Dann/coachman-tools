@@ -1113,7 +1113,10 @@ body {
   padding: 24px 30px 20px;
   max-width: 1600px;
   margin: 0 auto;
-  animation: rise 0.3s ease-out;
+  animation: rise 0.34s cubic-bezier(0.22, 0.7, 0.25, 1);
+}
+.slide.back .slide-grid {
+  animation-name: riseBack;
 }
 .slide-grid.wide {
   grid-template-columns: minmax(0, 1fr);
@@ -1127,7 +1130,13 @@ body {
 @keyframes rise {
   from {
     opacity: 0;
-    transform: translateY(6px);
+    transform: translateY(18px);
+  }
+}
+@keyframes riseBack {
+  from {
+    opacity: 0;
+    transform: translateY(-18px);
   }
 }
 
@@ -2553,4 +2562,140 @@ ul.pl.big li::before {
   .panel {
     padding: 16px 18px;
   }
+}
+
+/* ------------------------- the inline panel, when a job is clicked in scene */
+
+.probe {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  width: min(340px, calc(100% - 28px));
+  max-height: calc(100% - 28px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: rgba(20, 27, 34, 0.93);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--color-line-2);
+  border-radius: var(--r);
+  padding: 15px 16px 17px;
+  animation: probeIn 0.22s cubic-bezier(0.22, 0.7, 0.25, 1);
+}
+@keyframes probeIn {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+}
+.probe-h {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+.probe-h b {
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.018em;
+  color: var(--color-text);
+}
+.probe-h button {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  margin: -4px -4px 0 0;
+  border: 0;
+  border-radius: 2px;
+  background: none;
+  color: var(--color-text-3);
+  cursor: pointer;
+  font-size: 13px;
+}
+.probe-h button:hover {
+  color: var(--color-text);
+}
+.probe-w {
+  margin: 3px 0 0;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--color-text-3);
+}
+.probe-figs {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin: 13px 0;
+  padding: 12px 0;
+  border-top: 1px solid var(--color-line);
+  border-bottom: 1px solid var(--color-line);
+}
+.probe-figs b {
+  display: block;
+  font-weight: 800;
+  font-size: 21px;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text);
+}
+.probe-figs b.bad {
+  color: var(--color-flag);
+}
+.probe-figs b.ok {
+  color: var(--color-moss);
+}
+.probe-figs span {
+  display: block;
+  margin-top: 5px;
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--color-text-3);
+  line-height: 1.35;
+}
+.probe-d {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--color-text-2);
+}
+.probe-label {
+  margin: 13px 0 7px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-text-3);
+}
+.probe-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.probe-list li {
+  border-left: 2px solid var(--color-flag);
+  padding-left: 10px;
+}
+.probe-list b {
+  display: block;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--color-text);
+  line-height: 1.35;
+}
+.probe-list span {
+  display: block;
+  font-size: 12px;
+  color: var(--color-text-3);
+  margin-top: 2px;
+  line-height: 1.4;
+}
+.probe-clean {
+  margin: 12px 0 0;
+  font-size: 13px;
+  color: var(--color-moss);
 }

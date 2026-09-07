@@ -19,6 +19,9 @@ import {
   type Job,
 } from "@/lib/hub";
 import { fmt } from "@/lib/format";
+import { STEPS } from "@/content/steps";
+import { HANDOFFS } from "@/content/handoffs";
+import { HANDOFF_STEP } from "@/content/people";
 import { usePublishStatus } from "./SlideStatus";
 
 type Mode = "today" | "proposed";
@@ -38,6 +41,9 @@ export function HubSim({ mode }: { mode: Mode }) {
   const mountRef = useRef<HTMLDivElement>(null);
   const [mult, setMult] = useState(1);
   const [globe, setGlobe] = useState(false);
+  const [picked, setPicked] = useState<number | null>(null);
+  const pickedRef = useRef<number | null>(null);
+  pickedRef.current = picked;
 
   const jobs = useMemo(
     () => (mode === "today" ? todayJobs() : proposedJobs()),
@@ -51,6 +57,8 @@ export function HubSim({ mode }: { mode: Mode }) {
   /* refs the render loop reads without re-creating the scene */
   const state = useRef({ jobs, mult, heat: h, mode, globe });
   state.current = { jobs, mult, heat: h, mode, globe };
+  const onPick = useRef<(i: number | null) => void>(() => {});
+  onPick.current = (i) => setPicked((p) => (p === i ? null : i));
   const rebuild = useRef(0);
   useEffect(() => {
     rebuild.current += 1;
@@ -281,19 +289,46 @@ export function HubSim({ mode }: { mode: Mode }) {
     let pitch = 0.5;
     let drag: { x: number; y: number } | null = null;
     let touched = false;
+    let moved = false;
     const down = (e: PointerEvent) => {
       drag = { x: e.clientX, y: e.clientY };
-      touched = true;
+      moved = false;
       renderer.domElement.setPointerCapture(e.pointerId);
     };
     const move = (e: PointerEvent) => {
       if (!drag) return;
-      yaw -= (e.clientX - drag.x) * 0.006;
-      pitch = Math.max(0.16, Math.min(1.35, pitch + (e.clientY - drag.y) * 0.004));
+      const dx = e.clientX - drag.x;
+      const dy = e.clientY - drag.y;
+      if (Math.abs(dx) + Math.abs(dy) > 4) {
+        moved = true;
+        touched = true;
+      }
+      yaw -= dx * 0.006;
+      pitch = Math.max(0.16, Math.min(1.35, pitch + dy * 0.004));
       drag = { x: e.clientX, y: e.clientY };
     };
-    const up = () => {
+    const up = (e: PointerEvent) => {
+      const wasDragging = drag !== null;
       drag = null;
+      if (!wasDragging || moved) return;
+      // A click, not a drag. Take whichever job is nearest to it on screen.
+      const rect = renderer.domElement.getBoundingClientRect();
+      const cx = e.clientX - rect.left;
+      const cy = e.clientY - rect.top;
+      let best = -1;
+      let bestD = 46;
+      const v = new THREE.Vector3();
+      for (let i = 0; i < nodeAt.length; i++) {
+        v.copy(nodeAt[i]).project(camera);
+        const sx = ((v.x + 1) / 2) * rect.width;
+        const sy = ((1 - v.y) / 2) * rect.height;
+        const d = Math.hypot(sx - cx, sy - cy);
+        if (d < bestD) {
+          bestD = d;
+          best = i;
+        }
+      }
+      onPick.current(best >= 0 ? best : null);
     };
     renderer.domElement.addEventListener("pointerdown", down);
     renderer.domElement.addEventListener("pointermove", move);
@@ -384,6 +419,14 @@ export function HubSim({ mode }: { mode: Mode }) {
             pm.emissiveIntensity = 0.2 + st.heat * 0.9;
           }
 
+          const isPicked = pickedRef.current === i;
+          pads[i].scale.setScalar(
+            pads[i].scale.x + ((isPicked ? 1.45 : 1) - pads[i].scale.x) * 0.16,
+          );
+          pads[i].position.y +=
+            ((isPicked ? 0.45 : 0) - pads[i].position.y) * 0.16;
+          if (isPicked) m.emissiveIntensity = 1.1;
+
           const lm = links[i].material as THREE.LineBasicMaterial;
           lm.color.lerp(stacked ? tint : cool, 0.06);
           lm.opacity = stacked ? 0.28 + st.heat * 0.6 : st.mode === "proposed" ? 0.45 : 0.2;
@@ -450,9 +493,67 @@ export function HubSim({ mode }: { mode: Mode }) {
     ],
   });
 
+  /* What the clicked job actually is, drawn from the record. */
+  const job = picked !== null ? jobs[picked] : null;
+  const step = job && mode === "today" ? STEPS.find((x) => x.n === job.id) : null;
+  const reEntries =
+    job && mode === "today"
+      ? HANDOFFS.filter((_, k) => HANDOFF_STEP[k] === job.id)
+      : [];
+
   return (
     <div className="hub">
-      <div className="hub-stage" ref={mountRef} />
+      <div className="hub-stage" ref={mountRef}>
+        {job ? (
+          <div className="probe" role="dialog" aria-label={job.name}>
+            <div className="probe-h">
+              <b>{job.name}</b>
+              <button type="button" onClick={() => setPicked(null)} aria-label="Close">
+                &#10005;
+              </button>
+            </div>
+            {step ? <p className="probe-w">{step.w}</p> : null}
+            <ul className="probe-figs">
+              <li>
+                <b className={job.duplication ? "bad" : "ok"}>{job.duplication}</b>
+                <span>entered again</span>
+              </li>
+              <li>
+                <b>{job.minutes}</b>
+                <span>minutes a caravan</span>
+              </li>
+              <li>
+                <b className={job.duplication ? "bad" : undefined}>
+                  {fmt(Math.round((job.minutes * units) / 60))}
+                </b>
+                <span>hours a year</span>
+              </li>
+            </ul>
+            {step ? <p className="probe-d">{step.d}</p> : null}
+            {reEntries.length ? (
+              <>
+                <p className="probe-label">
+                  {reEntries.length === 1
+                    ? "The re-entry inside it"
+                    : "The re-entries inside it"}
+                </p>
+                <ul className="probe-list">
+                  {reEntries.map(([t, d]) => (
+                    <li key={t}>
+                      <b>{t}</b>
+                      <span>{d}</span>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            ) : (
+              <p className="probe-clean">
+                Nothing is entered twice here.
+              </p>
+            )}
+          </div>
+        ) : null}
+      </div>
 
       <div className="hub-hud" aria-live="polite">
         <div className="hud-cell">

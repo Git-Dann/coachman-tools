@@ -28,7 +28,10 @@ function DeckInner({ start }: { start: ChapterId }) {
   const { status } = useSlideStatus();
   const first = SLIDES.findIndex((s) => s.chapter === start);
   const [i, setI] = useState(first < 0 ? 0 : first);
+  const [dir, setDir] = useState(1);
   const [detail, setDetail] = useState(false);
+  const wheelLock = useRef(0);
+  const lastWheel = useRef(0);
   const touch = useRef<{ x: number; y: number } | null>(null);
   const liveRef = useRef<HTMLDivElement>(null);
 
@@ -39,6 +42,7 @@ function DeckInner({ start }: { start: ChapterId }) {
     (n: number) => {
       // The updater must stay pure. Calling another setState inside it makes
       // React discard the result under StrictMode's double invocation.
+      setDir(n >= 0 ? 1 : -1);
       setI((prev) => Math.max(0, Math.min(total - 1, prev + n)));
       setDetail(false);
     },
@@ -46,7 +50,10 @@ function DeckInner({ start }: { start: ChapterId }) {
   );
 
   const jump = useCallback((n: number) => {
-    setI(n);
+    setI((prev) => {
+      setDir(n >= prev ? 1 : -1);
+      return n;
+    });
     setDetail(false);
   }, []);
 
@@ -57,6 +64,52 @@ function DeckInner({ start }: { start: ChapterId }) {
       window.history.replaceState(null, "", path);
     }
   }, [slide.chapter]);
+
+  /*
+   * A wheel or trackpad gesture moves between slides.
+   *
+   * It defers to anything that can still scroll itself, so a long evidence
+   * sheet or an overflowing stage keeps its own scrolling, and it only takes
+   * over once that has hit its end. A cooldown stops one flick of a trackpad
+   * throwing three slides past.
+   */
+  useEffect(() => {
+    const onWheel = (e: WheelEvent) => {
+      if (detail) return;
+      if (Math.abs(e.deltaY) < Math.abs(e.deltaX)) return;
+      if (Math.abs(e.deltaY) < 8) return;
+
+      // The target is not always an element (a wheel event can land on the
+      // window), and getComputedStyle would throw on anything that is not.
+      let el =
+        e.target instanceof Element ? (e.target as HTMLElement) : null;
+      while (el && el !== document.body) {
+        const style = getComputedStyle(el);
+        const scrolls = /auto|scroll/.test(style.overflowY);
+        if (scrolls && el.scrollHeight > el.clientHeight + 2) {
+          const atTop = el.scrollTop <= 0;
+          const atEnd = el.scrollTop + el.clientHeight >= el.scrollHeight - 2;
+          if ((e.deltaY < 0 && !atTop) || (e.deltaY > 0 && !atEnd)) return;
+        }
+        el = el.parentElement;
+      }
+
+      /*
+       * One gesture, one slide. A trackpad flick arrives as a burst of events
+       * with momentum behind it, so anything still inside that burst is folded
+       * into the gesture that started it rather than counted again.
+       */
+      const now = Date.now();
+      const continuing = now - lastWheel.current < 160;
+      lastWheel.current = now;
+      if (continuing) return;
+      if (now - wheelLock.current < 700) return;
+      wheelLock.current = now;
+      go(e.deltaY > 0 ? 1 : -1);
+    };
+    window.addEventListener("wheel", onWheel, { passive: true });
+    return () => window.removeEventListener("wheel", onWheel);
+  }, [go, detail]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -105,7 +158,11 @@ function DeckInner({ start }: { start: ChapterId }) {
           }
         }}
       >
-        <section className="slide" key={slide.id} aria-labelledby={`t-${slide.id}`}>
+        <section
+          className={`slide ${dir > 0 ? "fwd" : "back"}`}
+          key={slide.id}
+          aria-labelledby={`t-${slide.id}`}
+        >
           {/* Desktop puts the interactive thing first and biggest, with the
               words in a narrow rail beside it. Phones stack, words first. */}
           <div className={`slide-grid${slide.wide ? " wide" : ""}`}>
