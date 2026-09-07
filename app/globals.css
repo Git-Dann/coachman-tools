@@ -1141,12 +1141,13 @@ body {
      it can never be scrolled back to. `safe` is the keyword that fixes it, and
      where it is unsupported the declaration is dropped and content starts at
      the top, which is the behaviour we want anyway. */
-  justify-content: safe center;
+  justify-content: stretch;
   overflow-y: auto;
   overscroll-behavior: contain;
 }
 .stage > * {
   min-height: 0;
+  flex: 1 1 auto;
 }
 
 .aside {
@@ -1746,20 +1747,24 @@ body {
   position: fixed;
   inset: 0;
   z-index: 60;
-  background: rgba(6, 9, 12, 0.72);
+  background: rgba(6, 9, 12, 0.78);
+  backdrop-filter: blur(3px);
   display: flex;
-  align-items: flex-end;
+  /* Centred on a desktop, where there is room on every side. */
+  align-items: center;
   justify-content: center;
+  padding: 32px;
 }
 .sheet {
   width: 100%;
-  max-width: 760px;
-  max-height: 88svh;
+  max-width: 1120px;
+  max-height: 86svh;
   display: flex;
   flex-direction: column;
   background: var(--color-ink);
   border: 1px solid var(--color-line-2);
-  border-radius: 10px 10px 0 0;
+  border-radius: 10px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
   animation: up 0.24s ease-out;
 }
 @keyframes up {
@@ -1795,7 +1800,20 @@ body {
 .sheet-body {
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding: 16px 16px calc(28px + env(safe-area-inset-bottom));
+  padding: 22px 26px 30px;
+}
+/* Two columns of evidence once there is room for them. */
+@media (min-width: 900px) {
+  .sheet-body .cards {
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  }
+  .sheet-body ol.hl {
+    columns: 2;
+    column-gap: 34px;
+  }
+  .sheet-body ol.hl li {
+    break-inside: avoid;
+  }
 }
 .sheet-body > *:first-child {
   margin-top: 0;
@@ -2090,6 +2108,17 @@ ul.pl.big li::before {
 }
 
 @media (max-width: 620px) {
+  .sheet-back {
+    align-items: flex-end;
+    padding: 0;
+  }
+  .sheet {
+    max-height: 88svh;
+    border-radius: 10px 10px 0 0;
+  }
+  .sheet-body {
+    padding: 16px 16px calc(28px + env(safe-area-inset-bottom));
+  }
   .mast {
     padding: 9px 14px;
   }
@@ -2104,5 +2133,127 @@ ul.pl.big li::before {
   }
   .rate {
     flex: 1 1 100%;
+  }
+}
+
+
+/* ================================================= the season simulation */
+
+.ssim {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  height: 100%;
+  min-height: 0;
+}
+/* The scene takes the room. Everything else is a readout on top of it. */
+.ssim-stage {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 320px;
+  border: 1px solid var(--color-line);
+  border-radius: var(--r);
+  overflow: hidden;
+  background: var(--color-ink);
+  cursor: grab;
+}
+.ssim-stage:active {
+  cursor: grabbing;
+}
+.ssim-stage canvas {
+  display: block;
+}
+
+.ssim-hud {
+  flex: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1px;
+  background: var(--color-line);
+  border: 1px solid var(--color-line);
+  border-radius: var(--r);
+  overflow: hidden;
+}
+.hud-cell {
+  background: var(--color-ink);
+  padding: 13px 16px;
+}
+.hud-cell.wide {
+  grid-column: span 2;
+}
+.hud-cell b {
+  display: block;
+  font-weight: 800;
+  font-size: clamp(22px, 2.3vw, 32px);
+  line-height: 1;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text);
+}
+.hud-cell b.sm {
+  font-size: clamp(15px, 1.5vw, 20px);
+  letter-spacing: -0.015em;
+}
+.hud-cell b.ok {
+  color: var(--color-moss);
+}
+.hud-cell b.bad {
+  color: var(--color-flag);
+}
+.hud-cell span {
+  display: block;
+  margin-top: 7px;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-3);
+  line-height: 1.45;
+}
+/* Work against waiting, on one bar. Two fills, a 2px gap between them. */
+.split {
+  display: flex;
+  gap: 2px;
+  height: 10px;
+  margin-bottom: 9px;
+  background: var(--color-surface-2);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.split i {
+  display: block;
+  height: 100%;
+  transition: width 0.4s ease-out;
+}
+.split .work {
+  background: var(--color-steel);
+}
+.split .wait {
+  background: var(--color-flag);
+}
+
+.ssim-ctl {
+  flex: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+.ssim-hint {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--color-text-3);
+  margin-left: auto;
+}
+
+@media (max-width: 999px) {
+  .ssim {
+    height: auto;
+  }
+  .ssim-stage {
+    height: 340px;
+    flex: none;
   }
 }

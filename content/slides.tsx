@@ -5,7 +5,7 @@ import { NodeMap3D } from "@/components/NodeMap3D";
 import { CapacityModel } from "@/components/CapacityModel";
 import { PeopleModel } from "@/components/PeopleModel";
 import { HoursModel } from "@/components/HoursModel";
-import { FlowSim } from "@/components/FlowSim";
+import { SeasonSim } from "@/components/SeasonSim";
 import { flowGraph, unitGraph } from "./graphs";
 import { STEPS } from "./steps";
 import { HANDOFFS } from "./handoffs";
@@ -287,12 +287,12 @@ export const SLIDES: Slide[] = [
     id: "sim",
     chapter: "operations",
     title: "Run the season.",
-    line: "Press play. Nobody needs telling where it jams.",
-    body: () => <FlowSim />,
+    line: "Press play. Watch how much of it is just waiting.",
+    body: () => <SeasonSim />,
     aside: () => (
       <p className="hint">
-        Each station takes as long as the re-entry points counted inside it.
-        Switch to Proposed and run the same orders again.
+        Red columns are time swallowed at that station. Switch to Proposed and
+        run the same orders again.
       </p>
     ),
     detailLabel: "How this is worked out",
