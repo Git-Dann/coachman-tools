@@ -6,6 +6,7 @@ import { CapacityModel } from "@/components/CapacityModel";
 import { PeopleModel } from "@/components/PeopleModel";
 import { HoursModel } from "@/components/HoursModel";
 import { SeasonSim } from "@/components/SeasonSim";
+import { HubSim } from "@/components/HubSim";
 import { flowGraph, unitGraph } from "./graphs";
 import { STEPS } from "./steps";
 import { HANDOFFS } from "./handoffs";
@@ -284,6 +285,81 @@ export const SLIDES: Slide[] = [
     ),
   },
   {
+    id: "throttle",
+    chapter: "operations",
+    title: "One caravan. Sixteen jobs around it.",
+    line: "Add another and watch the desk run out of year.",
+    body: () => <HubSim mode="today" />,
+    aside: () => (
+      <p className="hint">
+        Each stack is the same information being entered again. Twenty of them,
+        counted off the process. Switch to Proposed and add as many as you like.
+      </p>
+    ),
+    detailLabel: "How the hours are worked out",
+    detail: () => (
+      <>
+        <p>
+          <strong>Traceable.</strong> The sixteen jobs, the twenty re-entry
+          points and which job each one sits in, two people on the order desk,
+          around two thousand caravans a year, and that the system already
+          crashes at that volume.
+        </p>
+        <p>
+          <strong>Ours.</strong> How many minutes a job takes per caravan. Only
+          four of the sixteen were discussed in enough detail to estimate
+          directly, so the rest start from a stated rule: a minute for the work,
+          plus two more for every re-entry point counted inside it.
+        </p>
+        <p>
+          That puts today at roughly 1,900 hours a year on the order desk, of
+          which about 1,300 exist only because the same information is entered
+          more than once. Treat the shape as the finding and the minutes as a
+          starting point to correct.
+        </p>
+        <p>
+          Hours and crashes are kept apart on purpose. At today&rsquo;s volume
+          the hours can just about be absorbed; it is the software that is
+          unstable. Past double, the hours stop adding up as well.
+        </p>
+        <StepList />
+      </>
+    ),
+  },
+  {
+    id: "scales",
+    chapter: "operations",
+    title: "The same order, built properly.",
+    line: "Nothing entered twice, so adding volume adds no admin.",
+    body: () => <HubSim mode="proposed" />,
+    aside: () => (
+      <p className="hint">
+        Add as many as you like. The ring stays green, because the work per
+        caravan stops growing. Then zoom out: the same process runs anywhere.
+      </p>
+    ),
+    detailLabel: "The standard twelve stages",
+    detail: () => (
+      <>
+        <p>
+          Twelve stages, taken from Coachman&rsquo;s process and cleaned up.
+          Five of their sixteen steps exist only to move paper between systems
+          that cannot talk to each other, so they are not rebuilt.
+        </p>
+        <Table
+          cols={["Stage", "What it means"]}
+          rows={STAGES.map(([n, m], i) => [`${i + 1}. ${n}`, m])}
+        />
+        <p>
+          The sites on the globe are illustrative. They stand for the same
+          platform running for other manufacturers, which is the point of
+          building it as a product rather than a one-off. No second customer
+          exists yet.
+        </p>
+      </>
+    ),
+  },
+  {
     id: "sim",
     chapter: "operations",
     title: "Run the season.",
@@ -305,14 +381,9 @@ export const SLIDES: Slide[] = [
         <p>
           <strong>The one modelled number is how long a station takes.</strong>{" "}
           It is set to the number of re-entry points counted inside that step,
-          plus one for the work itself. Those counts come straight off the
-          process record. Turning re-entry points into time is our doing, not
-          something anyone said, because nobody was timed on the day. So the
-          shape of the jam is evidence. The exact tick count is not.
-        </p>
-        <p>
-          Invoicing carries five of the twenty, which is why it is the station
-          that backs up first.
+          plus one for the work itself. Turning re-entry points into time is our
+          doing, because nobody was timed on the day. So the shape of the jam is
+          evidence. The exact tick count is not.
         </p>
         <StepList />
       </>
