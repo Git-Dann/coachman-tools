@@ -4,9 +4,14 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer.js";
 import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
-import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
 import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass.js";
-import { PALETTE, caravanGeometry, glowTexture, labelSprite } from "@/lib/scene";
+import {
+  PALETTE,
+  caravanGeometry,
+  fitDistance,
+  labelSprite,
+  ringGeometry,
+} from "@/lib/scene";
 import {
   DESK_PEOPLE,
   UNITS_PER_STEP,
@@ -96,7 +101,7 @@ export function HubSim({ mode }: { mode: Mode }) {
     centre.position.set(0.5, 7, 3);
     scene.add(centre);
 
-    const glowTex = glowTexture();
+    const ringGeo = ringGeometry(1.35, 1.52);
     const vanGeo = caravanGeometry();
     const vanMat = new THREE.MeshStandardMaterial({
       vertexColors: true,
@@ -127,7 +132,7 @@ export function HubSim({ mode }: { mode: Mode }) {
 
     let pads: THREE.Mesh[] = [];
     let plates: THREE.Mesh[][] = [];
-    let glows: THREE.Sprite[] = [];
+    let marks: THREE.Mesh[] = [];
     let links: THREE.Line[] = [];
     let nodeAt: THREE.Vector3[] = [];
 
@@ -137,7 +142,7 @@ export function HubSim({ mode }: { mode: Mode }) {
       ring.clear();
       pads = [];
       plates = [];
-      glows = [];
+      marks = [];
       links = [];
       nodeAt = [];
 
@@ -182,20 +187,21 @@ export function HubSim({ mode }: { mode: Mode }) {
         }
         plates.push(stack);
 
-        const glow = new THREE.Sprite(
-          new THREE.SpriteMaterial({
-            map: glowTex,
+        // A thin ring on the floor, not a haze in the air. It marks the job and
+        // carries its colour without smearing light over everything nearby.
+        const mark = new THREE.Mesh(
+          ringGeo,
+          new THREE.MeshBasicMaterial({
             color: 0x6fae7f,
             transparent: true,
-            blending: THREE.AdditiveBlending,
+            opacity: 0.5,
             depthWrite: false,
-            opacity: 0.22,
+            side: THREE.DoubleSide,
           }),
         );
-        glow.position.set(pos.x, 0.1, pos.z);
-        glow.scale.set(4.2, 4.2, 1);
-        ring.add(glow);
-        glows.push(glow);
+        mark.position.set(pos.x, 0.035, pos.z);
+        ring.add(mark);
+        marks.push(mark);
 
         const label = labelSprite(job.name, "#DCE6EC");
         label.position.set(pos.x * 1.2, 0.95, pos.z * 1.2);
@@ -263,11 +269,35 @@ export function HubSim({ mode }: { mode: Mode }) {
     }
 
     /* ------------------------------------------------------------ post */
+    // RenderPass straight into OutputPass. The bloom pass that used to sit
+    // between them hazed the whole ring. OutputPass is not optional: without it
+    // the composer double-encodes the colours and the scene washes out grey.
     const composer = new EffectComposer(renderer);
     composer.addPass(new RenderPass(scene, camera));
-    const bloom = new UnrealBloomPass(new THREE.Vector2(1, 1), 0.5, 0.55, 0.45);
-    composer.addPass(bloom);
     composer.addPass(new OutputPass());
+
+    /*
+     * How much room the picture needs, measured rather than guessed. The widest
+     * job name hung off the left or right of the ring is what decides it, and
+     * guessing that put "Acknowledgement" half off the screen on a phone.
+     *
+     * Vertically it needs far less: the ring is flat and seen from above, so it
+     * stands about a third as high on screen as it is wide.
+     */
+    const REACH_V = 9.5;
+    let reachH = RADIUS + 1.6;
+    const measureReach = () => {
+      let r = RADIUS + 1.6;
+      // Radial, not just across x: the camera orbits, so every label passes
+      // through the widest point of the frame at some point in the turn.
+      ring.traverse((o) => {
+        if ((o as THREE.Sprite).isSprite) {
+          const radial = Math.hypot(o.position.x, o.position.z);
+          r = Math.max(r, radial + (o as THREE.Sprite).scale.x / 2);
+        }
+      });
+      reachH = r;
+    };
 
     let w = 0;
     let hgt = 0;
@@ -277,9 +307,11 @@ export function HubSim({ mode }: { mode: Mode }) {
       hgt = Math.max(1, r.height);
       renderer.setSize(w, hgt, false);
       composer.setSize(w, hgt);
-      bloom.resolution.set(w, hgt);
       camera.aspect = w / hgt;
       camera.updateProjectionMatrix();
+      const k = Math.max(1, fitDistance(camera, reachH, REACH_V) / 25.5);
+      (scene.fog as THREE.Fog).near = 26 * k;
+      (scene.fog as THREE.Fog).far = 90 * k;
     };
     resize();
     const ro = new ResizeObserver(resize);
@@ -347,8 +379,14 @@ export function HubSim({ mode }: { mode: Mode }) {
 
       if (builtFor !== rebuild.current) {
         buildRing(st.jobs);
+        measureReach();
+        // The reach only settles once the labels exist, so the framing and the
+        // fog have to be worked out again now they do.
+        resize();
         builtFor = rebuild.current;
       }
+
+      const minDist = fitDistance(camera, reachH, REACH_V);
 
       const showGlobe = st.mode === "proposed" && st.globe;
       globeGroup.visible = showGlobe;
@@ -357,9 +395,9 @@ export function HubSim({ mode }: { mode: Mode }) {
 
       if (showGlobe) {
         globeGroup.rotation.y += reduced ? 0 : 0.0016;
-        camDist += (22 - camDist) * 0.05;
+        camDist += (Math.max(22, minDist * 0.88) - camDist) * 0.05;
       } else {
-        camDist += (25.5 - camDist) * 0.05;
+        camDist += (Math.max(25.5, minDist) - camDist) * 0.05;
 
         /* the fleet in the middle */
         const n = Math.min(st.mult, 12);
@@ -403,14 +441,14 @@ export function HubSim({ mode }: { mode: Mode }) {
           m.emissiveIntensity = st.mode === "proposed" ? 0.55 : 0.12;
 
           const stacked = plates[i].length > 0;
-          const gm = glows[i].material as THREE.SpriteMaterial;
+          const gm = marks[i].material as THREE.MeshBasicMaterial;
           gm.color.lerp(stacked ? tint : cool, 0.08);
-          const glowTarget = stacked
-            ? 0.12 + st.heat * 0.5
+          const markTarget = stacked
+            ? 0.42 + st.heat * 0.45
             : st.mode === "proposed"
-              ? 0.26
-              : 0.08;
-          gm.opacity += (glowTarget - gm.opacity) * 0.08;
+              ? 0.7
+              : 0.34;
+          gm.opacity += (markTarget - gm.opacity) * 0.08;
 
           for (const plate of plates[i]) {
             const pm = plate.material as THREE.MeshStandardMaterial;
@@ -460,7 +498,7 @@ export function HubSim({ mode }: { mode: Mode }) {
       plateGeo.dispose();
       globeGeo.dispose();
       markerGeo.dispose();
-      glowTex.dispose();
+      ringGeo.dispose();
       mount.removeChild(renderer.domElement);
     };
   }, []);

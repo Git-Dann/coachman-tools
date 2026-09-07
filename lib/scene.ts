@@ -142,21 +142,45 @@ function mergeWithColours(
   return out;
 }
 
-/** A soft radial sprite, used as the glow under an active station. */
-export function glowTexture(): THREE.Texture {
-  const size = 128;
-  const c = document.createElement("canvas");
-  c.width = c.height = size;
-  const g = c.getContext("2d")!;
-  const grad = g.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
-  grad.addColorStop(0, "rgba(255,255,255,0.85)");
-  grad.addColorStop(0.35, "rgba(255,255,255,0.28)");
-  grad.addColorStop(1, "rgba(255,255,255,0)");
-  g.fillStyle = grad;
-  g.fillRect(0, 0, size, size);
-  const t = new THREE.CanvasTexture(c);
-  t.colorSpace = THREE.SRGBColorSpace;
-  return t;
+/**
+ * A flat ring laid on the floor, marking a station.
+ *
+ * This replaced a soft additive sprite. The sprite hazed everything near it and
+ * read as a smudge on the lens rather than as a mark on the ground, which is
+ * what it is meant to be.
+ */
+export function ringGeometry(inner: number, outer: number): THREE.RingGeometry {
+  const g = new THREE.RingGeometry(inner, outer, 56);
+  g.rotateX(-Math.PI / 2);
+  return g;
+}
+
+/**
+ * How far back a camera has to sit for a layout to fit inside the frame.
+ *
+ * A portrait canvas has a far narrower horizontal field of view than a laptop
+ * one at the same vertical field of view, so a distance that frames a ring
+ * nicely on a desktop cuts both sides off it on a phone.
+ *
+ * The two axes are worked out differently, because the shape is not the same
+ * in both. Across, the layout is a disc the camera orbits, and the near side of
+ * it is closer than the middle, so it needs the distance at which the frustum
+ * is tangent to a sphere of that radius: reach / sin, not reach / tan. Using
+ * tan is the obvious mistake and leaves the widest labels hanging off the edge
+ * by about a tenth. Vertically it is a height sitting near the middle of the
+ * scene, not a radius, so tan is right there.
+ */
+export function fitDistance(
+  camera: THREE.PerspectiveCamera,
+  reachH: number,
+  reachV: number = reachH,
+): number {
+  const vFov = (camera.fov * Math.PI) / 180;
+  const hFov = 2 * Math.atan(Math.tan(vFov / 2) * camera.aspect);
+  return Math.max(
+    reachH / Math.sin(hFov / 2),
+    reachV / Math.tan(vFov / 2),
+  );
 }
 
 /** A station name, drawn to a canvas and hung in the scene as a sprite. */
@@ -164,6 +188,13 @@ export function labelSprite(
   text: string,
   colour: string,
   bold = false,
+  /**
+   * Hold the label at a constant size on screen instead of letting perspective
+   * shrink it with distance. Worth it where the things being named sit at very
+   * different depths, because otherwise the nearest name is four times the size
+   * of the furthest and the picture reads as noise.
+   */
+  fixed = false,
 ): THREE.Sprite {
   const pad = 12;
   const c = document.createElement("canvas");
@@ -185,14 +216,53 @@ export function labelSprite(
     map: tex,
     transparent: true,
     depthWrite: false,
+    sizeAttenuation: !fixed,
   });
   const s = new THREE.Sprite(mat);
   s.scale.set((w / 64) * 0.86, 0.86, 1);
+  // The caller sizes a fixed label in pixels once it knows how tall the canvas
+  // is, so keep the shape of the texture where it can find it.
+  s.userData.ratio = w / 64;
   return s;
 }
 
-/** Where each station sits on the floor. A long shallow S, so it reads at an angle. */
-export function stationPositions(n: number): THREE.Vector3[] {
+/**
+ * Size a fixed label so it renders at roughly the given height in CSS pixels.
+ *
+ * With size attenuation off a sprite's scale is a fraction of the viewport
+ * height, so this is that fraction, and the width follows the texture's shape.
+ */
+export function sizeFixedLabel(
+  sprite: THREE.Sprite,
+  px: number,
+  canvasHeight: number,
+) {
+  const h = px / Math.max(1, canvasHeight);
+  sprite.scale.set(h * (sprite.userData.ratio as number), h, 1);
+}
+
+/**
+ * Where each station sits on the floor.
+ *
+ * On a wide canvas that is one long shallow S, read at an angle. A phone is
+ * portrait, and a line thirty-four units long in a portrait frame either runs
+ * off both sides or shrinks to nothing, so there it snakes back on itself: the
+ * first half left to right, the second half right to left underneath. Half the
+ * width, and the stations end up further apart rather than closer together.
+ */
+export function stationPositions(n: number, rows: 1 | 2 = 1): THREE.Vector3[] {
+  if (rows === 2) {
+    const top = Math.ceil(n / 2);
+    const span = 21;
+    return Array.from({ length: n }, (_, i) => {
+      const back = i >= top;
+      // The second row runs the other way, so the two join at the near end.
+      const k = back ? n - 1 - i : i;
+      const cols = back ? n - top : top;
+      const t = cols <= 1 ? 0.5 : k / (cols - 1);
+      return new THREE.Vector3((t - 0.5) * span, 0, back ? 5.8 : -5.8);
+    });
+  }
   const out: THREE.Vector3[] = [];
   const span = 34;
   for (let i = 0; i < n; i++) {

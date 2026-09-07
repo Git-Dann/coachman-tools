@@ -1031,14 +1031,21 @@ body {
   position: relative;
   z-index: 6;
   background: var(--color-ink);
-  display: flex;
-  gap: 2px;
-  padding: 8px 12px 6px;
   border-bottom: 1px solid var(--color-line);
   flex: none;
+  padding: 8px 12px 6px;
+}
+.rail-chs {
+  display: flex;
+  gap: 2px;
+}
+/* The one-line version. Desktop names all three chapters instead. */
+.rail-where {
+  display: none;
 }
 .rail-ch {
-  flex: 1 1 0;
+  flex-shrink: 1;
+  flex-basis: 0;
   min-width: 0;
 }
 .rail-name {
@@ -1081,12 +1088,6 @@ body {
   margin-left: 7px;
   font-variant-numeric: tabular-nums;
 }
-@media (max-width: 620px) {
-  .rail-name em {
-    display: block;
-    margin: 3px 0 0;
-  }
-}
 .rail-ticks {
   display: flex;
   gap: 2px;
@@ -1095,6 +1096,7 @@ body {
   flex: 1 1 0;
   height: 22px;
   padding: 9px 0 0;
+  min-width: 0;
   border: 0;
   background: none;
   cursor: pointer;
@@ -1239,6 +1241,16 @@ body {
 .aside-body {
   margin-top: 20px;
 }
+/* The one line of provenance a few slides carry. It used to sit in the bottom
+   bar, taking a third of the width on a phone to say something quiet. */
+.slide-foot {
+  margin: 18px 0 0;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--color-text-3);
+}
 .hint {
   font-size: 13px;
   color: var(--color-text-3);
@@ -1274,7 +1286,7 @@ body {
   flex: none;
   display: flex;
   gap: 8px;
-  align-items: center;
+  align-items: stretch;
   padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
   border-top: 1px solid var(--color-line);
   background: var(--color-ink);
@@ -1284,8 +1296,7 @@ body {
   border: 1px solid var(--color-line);
   border-radius: var(--r);
   color: var(--color-text-2);
-  min-height: 46px;
-  min-width: 52px;
+  min-height: 48px;
   padding: 0 14px;
   cursor: pointer;
   font-family: var(--font-mono);
@@ -1293,31 +1304,126 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 10px;
 }
-.dbtn.wide {
-  flex: 1;
+.dbtn:hover:not(:disabled) {
+  border-color: var(--color-line-2);
+  color: var(--color-text);
+}
+/* Back and next each name the slide they go to, so the bar tells you what is
+   coming rather than just pointing at it. */
+.dbtn.prev,
+.dbtn.next {
+  flex: 1 1 0;
+  min-width: 0;
+}
+.dbtn.prev {
+  justify-content: flex-start;
+}
+.dbtn.next {
+  justify-content: flex-end;
+}
+.dbtn em {
+  font-style: normal;
   font-family: var(--font-sans);
   font-size: 13px;
   font-weight: 600;
-  color: var(--color-brass);
-  border-color: var(--color-line-2);
-  text-align: center;
-  line-height: 1.25;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
 }
-.dbtn.ghost {
-  background: none;
-  border-color: transparent;
-  color: var(--color-text-3);
+.dbtn.next em {
+  color: var(--color-brass);
+}
+.dbtn.contents {
+  flex: 0 0 auto;
+  gap: 9px;
+  border-color: var(--color-line-2);
+}
+.dbtn.contents b {
   font-weight: 400;
-  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--color-brass);
+  font-variant-numeric: tabular-nums;
+}
+.dbtn.contents span {
   font-size: 10px;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.09em;
   text-transform: uppercase;
-  cursor: default;
+  color: var(--color-text-3);
 }
 .dbtn:disabled {
-  opacity: 0.3;
+  opacity: 0.32;
   cursor: default;
+}
+.dbtn:disabled em {
+  color: var(--color-text-3);
+}
+
+/* ------------------------------------------------------------- contents */
+
+.idx {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.idx-row {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  width: 100%;
+  background: none;
+  border: 0;
+  border-radius: var(--r);
+  padding: 12px 12px;
+  min-height: 52px;
+  cursor: pointer;
+  text-align: left;
+  color: var(--color-text-2);
+}
+.idx-row:hover {
+  background: var(--color-surface);
+}
+.idx-row b {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--color-text-3);
+  font-variant-numeric: tabular-nums;
+  flex: none;
+}
+.idx-row span {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.idx-row em {
+  font-style: normal;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  color: var(--color-text);
+}
+.idx-row i {
+  font-style: normal;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-text-3);
+}
+.idx-row.now {
+  background: var(--color-surface);
+}
+.idx-row.now b,
+.idx-row.now i {
+  color: var(--color-brass);
 }
 
 /* ------------------------------------------------------------- big nums */
@@ -2118,19 +2224,28 @@ ul.pl.big li::before {
   .slide-grid,
   .slide-grid.wide {
     grid-template-columns: minmax(0, 1fr);
-    grid-template-areas: "aside" "stage";
+    /* Headline, then the thing itself, then the readings off it. Words first
+       and picture last put a wall of text on the first screen of a phone. */
+    grid-template-areas: "head" "stage" "rest";
     gap: 20px;
     padding: 18px 16px 28px;
     height: auto;
   }
+  /* The aside stops being a box and lets its two halves sit in the grid. */
+  .aside,
   .slide-grid.wide .aside {
-    display: flex;
+    display: contents;
   }
-  .aside {
-    grid-area: aside;
-    overflow: visible;
-    max-height: none;
-    align-self: stretch;
+  .aside-head {
+    grid-area: head;
+    min-width: 0;
+  }
+  .aside-rest {
+    grid-area: rest;
+    min-width: 0;
+  }
+  .aside-rest:empty {
+    display: none;
   }
   .stage {
     grid-area: stage;
@@ -2167,9 +2282,84 @@ ul.pl.big li::before {
   .mast-by {
     display: none;
   }
+  /*
+   * The phone rail. Three chapter names, three tick groups and a stacked
+   * marker was three rows of chrome on a 375px screen, with ticks too narrow
+   * to aim at. It becomes one line saying where you are and one unbroken bar.
+   */
   .rail {
-    padding: 7px 10px 5px;
+    padding: 8px 12px 6px;
   }
+  .rail-where {
+    display: flex;
+    align-items: baseline;
+    gap: 9px;
+    margin: 0 0 7px;
+    min-width: 0;
+  }
+  .rail-where span {
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--color-brass);
+    flex: none;
+  }
+  .rail-where em {
+    font-style: normal;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: -0.015em;
+    color: var(--color-text);
+    flex: 1 1 auto;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .rail-where i {
+    font-style: normal;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--color-text-3);
+    font-variant-numeric: tabular-nums;
+    flex: none;
+  }
+  .rail-name {
+    display: none;
+  }
+  /* One bar, evenly divided, with a gap only where a chapter changes. */
+  .rail-chs {
+    gap: 9px;
+  }
+  .tickm {
+    height: 26px;
+    padding: 11px 0 0;
+  }
+  .tickm::after {
+    height: 5px;
+  }
+
+  /* Back and next carry the names on a phone too, but the contents button
+     drops its word so the two of them keep room to be readable. */
+  .deck-bar {
+    gap: 6px;
+    padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
+  }
+  .dbtn {
+    padding: 0 11px;
+    gap: 7px;
+  }
+  .dbtn em {
+    font-size: 12.5px;
+  }
+  .dbtn.contents span {
+    display: none;
+  }
+  .dbtn.contents {
+    padding: 0 13px;
+  }
+
   .sim-ctl .play {
     flex: 1 1 100%;
   }
@@ -2295,7 +2485,10 @@ ul.pl.big li::before {
     height: auto;
   }
   .ssim-stage {
-    height: 340px;
+    height: auto;
+    aspect-ratio: 5 / 4;
+    max-height: 46svh;
+    min-height: 260px;
     flex: none;
   }
 }
@@ -2410,7 +2603,10 @@ ul.pl.big li::before {
     height: auto;
   }
   .hub-stage {
-    height: 340px;
+    height: auto;
+    aspect-ratio: 5 / 4;
+    max-height: 46svh;
+    min-height: 260px;
     flex: none;
   }
 }
@@ -2499,7 +2695,10 @@ ul.pl.big li::before {
     height: auto;
   }
   .cover-scene {
-    height: 300px;
+    height: auto;
+    aspect-ratio: 4 / 3;
+    max-height: 44svh;
+    min-height: 240px;
     flex: none;
   }
 }
@@ -2724,4 +2923,42 @@ ul.pl.big li::before {
   margin: 12px 0 0;
   font-size: 13px;
   color: var(--color-moss);
+}
+
+
+/* ----------------------------------------------------- phone: no repeats */
+
+/*
+ * Every slide that publishes a status also shows the same figures beside the
+ * thing they are measuring. Side by side on a desktop that reads as a summary.
+ * Stacked on a phone it is the same four numbers twice in a row, so the panel
+ * keeps its verdict and drops the figures.
+ *
+ * This sits at the end of the file deliberately: the base rules for .status
+ * come later than the mobile block further up, and would otherwise win.
+ */
+@media (max-width: 999px) {
+  .status-figs {
+    display: none;
+  }
+  .status {
+    margin-top: 18px;
+    padding-top: 16px;
+  }
+}
+
+/* On a desktop the bar has width to spare, so the two named buttons sit at the
+   edges at their natural size and the contents button holds the centre. */
+@media (min-width: 1000px) {
+  .deck-bar {
+    justify-content: space-between;
+  }
+  .dbtn.prev,
+  .dbtn.next {
+    flex: 0 1 auto;
+    max-width: 34%;
+  }
+  .dbtn.contents {
+    margin: 0 auto;
+  }
 }

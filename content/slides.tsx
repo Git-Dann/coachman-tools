@@ -277,7 +277,7 @@ export const SLIDES: Slide[] = [
     aside: () => (
       <p className="hint">
         Fourteen places each hold a piece of one caravan, and none of them is
-        the caravan. Arrow keys to move on.
+        the caravan. Use the arrows below to move on.
       </p>
     ),
     detailLabel: "What the business runs on",
@@ -430,7 +430,7 @@ export const SLIDES: Slide[] = [
     title: "Follow one caravan.",
     line: "From a batch number to a line in a handwritten book.",
     body: () => <VanPlayer />,
-    footnote: "Click the track to jump",
+    footnote: "Tap the track to jump to a stage",
   },
   {
     id: "people",

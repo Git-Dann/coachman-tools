@@ -4,9 +4,14 @@ import { useEffect, useRef } from "react";
 import * as THREE from "three";
 import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer.js";
 import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
-import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
 import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass.js";
-import { PALETTE, caravanGeometry, glowTexture, labelSprite } from "@/lib/scene";
+import {
+  PALETTE,
+  caravanGeometry,
+  fitDistance,
+  labelSprite,
+  sizeFixedLabel,
+} from "@/lib/scene";
 
 /** The fourteen places that each hold a piece of one caravan. */
 const HOLDERS = [
@@ -64,9 +69,9 @@ export function CoverScene() {
     scene.add(van);
 
     /* the fourteen places holding a piece of it */
-    const glowTex = glowTexture();
-    const shardGeo = new THREE.BoxGeometry(0.72, 0.06, 0.52);
-    const shards: { mesh: THREE.Mesh; glow: THREE.Sprite; a: number; r: number; y: number; s: number }[] = [];
+    const shardGeo = new THREE.BoxGeometry(1.15, 0.1, 0.82);
+    const shards: { mesh: THREE.Mesh; a: number; r: number; y: number; s: number }[] = [];
+    const labels: THREE.Sprite[] = [];
 
     HOLDERS.forEach((name, i) => {
       const a = (i / HOLDERS.length) * Math.PI * 2;
@@ -79,36 +84,40 @@ export function CoverScene() {
         new THREE.MeshStandardMaterial({
           color: colour,
           emissive: colour,
-          emissiveIntensity: 0.5,
-          roughness: 0.5,
+          emissiveIntensity: 0.75,
+          roughness: 0.38,
+          metalness: 0.1,
         }),
       );
       scene.add(mesh);
 
-      const glow = new THREE.Sprite(
-        new THREE.SpriteMaterial({
-          map: glowTex,
-          color: colour,
-          transparent: true,
-          blending: THREE.AdditiveBlending,
-          depthWrite: false,
-          opacity: 0.32,
-        }),
-      );
-      glow.scale.set(2.6, 2.6, 1);
-      scene.add(glow);
-
-      const label = labelSprite(name, "#8EA1AE");
+      const label = labelSprite(name, "#A8B8C4", false, true);
       scene.add(label);
-      shards.push({ mesh, glow, a, r, y, s: i });
+      labels.push(label);
+      shards.push({ mesh, a, r, y, s: i });
       (mesh as unknown as { label: THREE.Sprite }).label = label;
     });
 
+    // RenderPass then OutputPass, with nothing between them. There used to be a
+    // bloom pass here; it put a haze over the whole picture. OutputPass has to
+    // stay, or the composer double-encodes the colours and everything greys out.
     const composer = new EffectComposer(renderer);
     composer.addPass(new RenderPass(scene, camera));
-    const bloom = new UnrealBloomPass(new THREE.Vector2(1, 1), 0.55, 0.6, 0.4);
-    composer.addPass(bloom);
     composer.addPass(new OutputPass());
+
+    /*
+     * Far enough out that the outermost holder lands inside the frame. The
+     * names are drawn at a fixed size on screen rather than in the world, so
+     * they no longer widen the picture the further out they orbit.
+     */
+    const REACH_V = 7;
+    const ringReach = shards.reduce((r, sh) => Math.max(r, sh.r * 1.1), 6) + 0.8;
+    const widestLabel = labels.reduce(
+      (m, l) => Math.max(m, l.userData.ratio as number),
+      1,
+    );
+    const BASE = Math.hypot(6.4, 16.5);
+    let dist = BASE;
 
     let w = 0;
     let h = 0;
@@ -118,9 +127,24 @@ export function CoverScene() {
       h = Math.max(1, r.height);
       renderer.setSize(w, h, false);
       composer.setSize(w, h);
-      bloom.resolution.set(w, h);
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
+      const labelPx = w < 620 ? 11 : 13;
+      /*
+       * A fixed-size name takes the same slice of the frame however far back
+       * the camera goes, so it cannot be added to the reach as a world measure.
+       * Instead the ring is given the share of the frame that is left once the
+       * widest name has taken its cut off each side.
+       */
+      const share = Math.min(0.45, (labelPx * widestLabel) / w);
+      dist = Math.max(BASE, fitDistance(camera, ringReach / (1 - share), REACH_V));
+      // Keep the haze where it was relative to the camera, so pulling back on a
+      // narrow screen does not fog the far side of the ring out of existence.
+      const k = dist / BASE;
+      (scene.fog as THREE.Fog).near = 18 * k;
+      (scene.fog as THREE.Fog).far = 60 * k;
+      // Every name the same size, whichever side of the turn it is on.
+      for (const l of labels) sizeFixedLabel(l, labelPx, h);
     };
     resize();
     const ro = new ResizeObserver(resize);
@@ -138,13 +162,12 @@ export function CoverScene() {
         const bob = reduced ? 0 : Math.sin(t * 0.0007 + s.s) * 0.34;
         s.mesh.position.set(x, s.y + bob, z);
         s.mesh.rotation.set(0.1, -a, 0.06);
-        s.glow.position.set(x, s.y + bob, z);
         const label = (s.mesh as unknown as { label: THREE.Sprite }).label;
-        label.position.set(x * 1.13, s.y + bob + 0.62, z * 1.13);
+        label.position.set(x * 1.1, s.y + bob + 1.02, z * 1.1);
       }
 
-      camera.position.set(0, 6.4, 16.5);
-      camera.lookAt(0, 1.4, 0);
+      camera.position.set(0, dist * 0.34, dist * 0.94);
+      camera.lookAt(0, 0.8, 0);
       composer.render();
       raf = requestAnimationFrame(frame);
     };
@@ -157,7 +180,6 @@ export function CoverScene() {
       renderer.dispose();
       vanGeo.dispose();
       shardGeo.dispose();
-      glowTex.dispose();
       mount.removeChild(renderer.domElement);
     };
   }, []);

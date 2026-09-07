@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer.js";
 import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
-import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
 import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass.js";
 import {
   newSim,
@@ -17,7 +16,8 @@ import {
 import {
   PALETTE,
   caravanGeometry,
-  glowTexture,
+  fitDistance,
+  ringGeometry,
   labelSprite,
   stationPositions,
 } from "@/lib/scene";
@@ -121,13 +121,13 @@ export function SeasonSim() {
     scene.add(grid);
 
     /* ------------------------------------------------------- stations */
-    const glowTex = glowTexture();
+    const ringGeo = ringGeometry(1.5, 1.7);
     const stationGroup = new THREE.Group();
     scene.add(stationGroup);
 
     let positions: THREE.Vector3[] = [];
     let pads: THREE.Mesh[] = [];
-    let glows: THREE.Sprite[] = [];
+    let marks: THREE.Mesh[] = [];
     let labels: THREE.Sprite[] = [];
     let waitBars: THREE.Mesh[] = [];
     let builtFor = -1;
@@ -139,10 +139,10 @@ export function SeasonSim() {
     const buildStations = (sim: Sim) => {
       stationGroup.clear();
       pads = [];
-      glows = [];
+      marks = [];
       labels = [];
       waitBars = [];
-      positions = stationPositions(sim.stations.length);
+      positions = stationPositions(sim.stations.length, layoutRows);
 
       sim.stations.forEach((s, i) => {
         const colour = s.removed
@@ -165,20 +165,21 @@ export function SeasonSim() {
         stationGroup.add(pad);
         pads.push(pad);
 
-        const glow = new THREE.Sprite(
-          new THREE.SpriteMaterial({
-            map: glowTex,
+        // A ring on the floor rather than a haze in the air: it says the station
+        // is working without smearing light across its neighbours.
+        const mark = new THREE.Mesh(
+          ringGeo,
+          new THREE.MeshBasicMaterial({
             color: colour,
             transparent: true,
-            blending: THREE.AdditiveBlending,
+            opacity: 0.2,
             depthWrite: false,
-            opacity: 0,
+            side: THREE.DoubleSide,
           }),
         );
-        glow.position.set(positions[i].x, 0.18, positions[i].z);
-        glow.scale.set(5.5, 5.5, 1);
-        stationGroup.add(glow);
-        glows.push(glow);
+        mark.position.set(positions[i].x, 0.04, positions[i].z);
+        stationGroup.add(mark);
+        marks.push(mark);
 
         const label = labelSprite(s.short, "#9DAFBA");
         label.position.set(positions[i].x, 1.85, positions[i].z);
@@ -210,12 +211,18 @@ export function SeasonSim() {
       );
       stationGroup.add(line);
 
+      // Both ends point away from the middle, whichever way the line is laid.
+      const firstP = positions[0];
+      const lastP = positions[positions.length - 1];
       const inLbl = labelSprite("IN", "#6C7D89");
-      inLbl.position.set(positions[0].x - 3.2, 1.1, positions[0].z);
+      inLbl.position.set(firstP.x - 3.2, 1.1, firstP.z);
       stationGroup.add(inLbl);
       const outLbl = labelSprite("OUT", "#6FAE7F");
-      const lastP = positions[positions.length - 1];
-      outLbl.position.set(lastP.x + 3.4, 1.1, lastP.z);
+      outLbl.position.set(
+        lastP.x + (layoutRows === 2 ? -3.6 : 3.4),
+        1.1,
+        lastP.z,
+      );
       stationGroup.add(outLbl);
     };
 
@@ -237,11 +244,11 @@ export function SeasonSim() {
     );
     scene.add(vans);
 
-    /* ----------------------------------------------------------- bloom */
+    /* ------------------------------------------------------------ post */
     const composer = new EffectComposer(renderer);
     composer.addPass(new RenderPass(scene, camera));
-    const bloom = new UnrealBloomPass(new THREE.Vector2(1, 1), 0.5, 0.5, 0.5);
-    composer.addPass(bloom);
+    // No bloom pass. It hazed the line and made the caravans hard to pick out.
+    // OutputPass below is still required, or the composer double-encodes.
     /*
      * Without this the composer writes a linear buffer straight to the screen,
      * tone mapping and colour space get applied twice, and the blacks lift into
@@ -250,6 +257,26 @@ export function SeasonSim() {
     composer.addPass(new OutputPass());
 
     /* ------------------------------------------------------------ size */
+    /*
+     * The line of stations is long, so on a narrow canvas the camera has to come
+     * back to keep both ends of it in frame. The reach is measured off the
+     * station labels, which stick out further than the pads they name.
+     */
+    const REACH_V = 11;
+    let reachH = 19;
+    // One long line on a wide canvas, snaked into two on a narrow one.
+    let layoutRows: 1 | 2 = 1;
+    const measureReach = () => {
+      let r = 12;
+      // Radial, because the camera turns: a station at the far end of the line
+      // swings across the frame as it does.
+      for (const l of labels) {
+        r = Math.max(r, Math.hypot(l.position.x, l.position.z) + l.scale.x / 2);
+      }
+      reachH = r;
+    };
+    let dist = 23.5;
+
     let w = 0;
     let h = 0;
     const resize = () => {
@@ -258,9 +285,13 @@ export function SeasonSim() {
       h = Math.max(1, r.height);
       renderer.setSize(w, h, false);
       composer.setSize(w, h);
-      bloom.resolution.set(w, h);
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
+      layoutRows = camera.aspect < 1.45 ? 2 : 1;
+      dist = Math.max(23.5, fitDistance(camera, reachH, REACH_V));
+      const k = dist / 23.5;
+      (scene.fog as THREE.Fog).near = 16 * k;
+      (scene.fog as THREE.Fog).far = 52 * k;
     };
     resize();
     const ro = new ResizeObserver(resize);
@@ -298,15 +329,24 @@ export function SeasonSim() {
     let acc = 0;
     let last = performance.now();
     let lastReset = resetRef.current;
+    let builtRows: 1 | 2 = layoutRows;
     let raf = 0;
 
     const frame = (now: number) => {
       const dt = Math.min(now - last, 120);
       last = now;
 
-      if (resetRef.current !== lastReset || builtFor !== simRef.current.stations.length) {
+      if (
+        resetRef.current !== lastReset ||
+        builtFor !== simRef.current.stations.length ||
+        builtRows !== layoutRows
+      ) {
         buildStations(simRef.current);
+        // Same as the hub: the reach is only knowable once the labels exist.
+        measureReach();
+        resize();
         builtFor = simRef.current.stations.length;
+        builtRows = layoutRows;
         lastReset = resetRef.current;
       }
 
@@ -400,8 +440,8 @@ export function SeasonSim() {
         const m = pads[i].material as THREE.MeshStandardMaterial;
         const busy = sim.active[i];
         m.emissiveIntensity += ((busy ? 0.95 : 0.12) - m.emissiveIntensity) * 0.14;
-        const gm = glows[i].material as THREE.SpriteMaterial;
-        gm.opacity += ((busy ? 0.5 : 0.06) - gm.opacity) * 0.12;
+        const gm = marks[i].material as THREE.MeshBasicMaterial;
+        gm.opacity += ((busy ? 0.9 : 0.2) - gm.opacity) * 0.12;
 
         const bar = waitBars[i];
         const target = (sim.waitAt[i] / maxWait) * 5.5;
@@ -415,10 +455,11 @@ export function SeasonSim() {
 
       if (!reduced && !userMoved) yaw += 0.0006;
       // Framed so the whole line stays inside the viewport at any yaw.
-      const dist = 23.5;
+      // Look down harder on the snaked layout: the two rows are stacked in
+      // depth, and a low camera flattens them into each other.
       camera.position.set(
         Math.sin(yaw) * dist,
-        10.6,
+        dist * (layoutRows === 2 ? 0.66 : 0.451),
         Math.cos(yaw) * dist + 1,
       );
       camera.lookAt(0, 1.4, 0);
@@ -440,7 +481,7 @@ export function SeasonSim() {
       vanGeo.dispose();
       padGeo.dispose();
       barGeo.dispose();
-      glowTex.dispose();
+      ringGeo.dispose();
       scene.traverse((o) => {
         const any = o as THREE.Mesh;
         if (any.material) {

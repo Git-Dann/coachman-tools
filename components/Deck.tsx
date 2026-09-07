@@ -30,6 +30,7 @@ function DeckInner({ start }: { start: ChapterId }) {
   const [i, setI] = useState(first < 0 ? 0 : first);
   const [dir, setDir] = useState(1);
   const [detail, setDetail] = useState(false);
+  const [index, setIndex] = useState(false);
   const wheelLock = useRef(0);
   const lastWheel = useRef(0);
   const touch = useRef<{ x: number; y: number } | null>(null);
@@ -45,6 +46,7 @@ function DeckInner({ start }: { start: ChapterId }) {
       setDir(n >= 0 ? 1 : -1);
       setI((prev) => Math.max(0, Math.min(total - 1, prev + n)));
       setDetail(false);
+      setIndex(false);
     },
     [total],
   );
@@ -55,6 +57,7 @@ function DeckInner({ start }: { start: ChapterId }) {
       return n;
     });
     setDetail(false);
+    setIndex(false);
   }, []);
 
   // Keep the URL honest as you move between chapters, without a navigation.
@@ -75,7 +78,7 @@ function DeckInner({ start }: { start: ChapterId }) {
    */
   useEffect(() => {
     const onWheel = (e: WheelEvent) => {
-      if (detail) return;
+      if (detail || index) return;
       if (Math.abs(e.deltaY) < Math.abs(e.deltaX)) return;
       if (Math.abs(e.deltaY) < 8) return;
 
@@ -109,7 +112,7 @@ function DeckInner({ start }: { start: ChapterId }) {
     };
     window.addEventListener("wheel", onWheel, { passive: true });
     return () => window.removeEventListener("wheel", onWheel);
-  }, [go, detail]);
+  }, [go, detail, index]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -123,7 +126,10 @@ function DeckInner({ start }: { start: ChapterId }) {
       else if (e.key === " " && !e.shiftKey) {
         e.preventDefault();
         go(1);
-      } else if (e.key === "Escape") setDetail(false);
+      } else if (e.key === "Escape") {
+        setDetail(false);
+        setIndex(false);
+      }
       else if (e.key === "Home") jump(0);
       else if (e.key === "End") jump(total - 1);
     };
@@ -169,63 +175,115 @@ function DeckInner({ start }: { start: ChapterId }) {
             <div className="stage">
               <Body />
             </div>
+            {/* Split in two so a phone can put the scene between them: the
+                headline sets up what you are looking at, the scene comes next,
+                and everything that reads off it follows underneath. On a
+                desktop the two halves sit together in the right-hand column. */}
             <div className="aside">
-              <p className="slide-kicker">
-                <span>{CHAPTERS.find((c) => c.id === slide.chapter)?.name}</span>
-                <b>
-                  {i + 1} / {total}
-                </b>
-              </p>
-              <h1 id={`t-${slide.id}`} className="slide-h">
-                {slide.title}
-              </h1>
-              {slide.line ? <p className="slide-line">{slide.line}</p> : null}
-              {status ? <StatusPanel status={status} /> : null}
-              {Aside ? (
-                <div className="aside-body">
-                  <Aside />
-                </div>
-              ) : null}
-              {Detail ? (
-                <button
-                  type="button"
-                  className="basis"
-                  onClick={() => setDetail(true)}
-                  aria-haspopup="dialog"
-                >
-                  {slide.detailLabel ?? "Where this comes from"}
-                </button>
-              ) : null}
+              <div className="aside-head">
+                <p className="slide-kicker">
+                  <span>{CHAPTERS.find((c) => c.id === slide.chapter)?.name}</span>
+                  <b>
+                    {i + 1} / {total}
+                  </b>
+                </p>
+                <h1 id={`t-${slide.id}`} className="slide-h">
+                  {slide.title}
+                </h1>
+                {slide.line ? <p className="slide-line">{slide.line}</p> : null}
+              </div>
+              <div className="aside-rest">
+                {status ? <StatusPanel status={status} /> : null}
+                {Aside ? (
+                  <div className="aside-body">
+                    <Aside />
+                  </div>
+                ) : null}
+                {slide.footnote ? (
+                  <p className="slide-foot">{slide.footnote}</p>
+                ) : null}
+                {Detail ? (
+                  <button
+                    type="button"
+                    className="basis"
+                    onClick={() => setDetail(true)}
+                    aria-haspopup="dialog"
+                  >
+                    {slide.detailLabel ?? "Where this comes from"}
+                  </button>
+                ) : null}
+              </div>
             </div>
           </div>
         </section>
       </div>
 
+      {/* Back, contents, next. The middle used to be a dead caption repeating
+          the headline, which on a phone was most of the bar doing nothing. */}
       <div className="deck-bar">
         <button
           type="button"
-          className="dbtn"
+          className="dbtn prev"
           onClick={() => go(-1)}
           disabled={i === 0}
-          aria-label="Previous slide"
+          aria-label={i === 0 ? "Previous slide" : `Back to ${SLIDES[i - 1].marker}`}
         >
-          &#8592;
+          <span aria-hidden="true">&#8592;</span>
+          <em>{i === 0 ? "Start" : SLIDES[i - 1].marker}</em>
         </button>
-
-        <span className="dbtn wide ghost">
-          {slide.footnote ?? (i === 0 ? "Arrow keys to move · click the rail to jump" : slide.title)}
-        </span>
 
         <button
           type="button"
-          className="dbtn"
+          className="dbtn contents"
+          onClick={() => setIndex(true)}
+          // The word is hidden on a phone to keep the two named buttons either
+          // side readable, so the label has to carry it.
+          aria-label={`Contents. Slide ${i + 1} of ${total}`}
+          aria-haspopup="dialog"
+          aria-expanded={index}
+        >
+          <b>
+            {i + 1}/{total}
+          </b>
+          <span>Contents</span>
+        </button>
+
+        <button
+          type="button"
+          className="dbtn next"
           onClick={() => go(1)}
           disabled={i === total - 1}
-          aria-label="Next slide"
+          aria-label={
+            i === total - 1 ? "Next slide" : `On to ${SLIDES[i + 1].marker}`
+          }
         >
-          &#8594;
+          <em>{i === total - 1 ? "End" : SLIDES[i + 1].marker}</em>
+          <span aria-hidden="true">&#8594;</span>
         </button>
       </div>
+
+      {index ? (
+        <Sheet title="Contents" onClose={() => setIndex(false)}>
+          <ol className="idx">
+            {SLIDES.map((sl, n) => (
+              <li key={sl.id}>
+                <button
+                  type="button"
+                  className={`idx-row${n === i ? " now" : ""}`}
+                  onClick={() => jump(n)}
+                  aria-current={n === i ? "step" : undefined}
+                >
+                  <b>{String(n + 1).padStart(2, "0")}</b>
+                  <span>
+                    <em>{sl.marker}</em>
+                    <i>{CHAPTERS.find((c) => c.id === sl.chapter)?.name}</i>
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ol>
+        </Sheet>
+      ) : null}
 
       {detail && Detail ? (
         <Sheet
@@ -243,48 +301,72 @@ function DeckInner({ start }: { start: ChapterId }) {
   );
 }
 
-/** The progress rail. Each chapter is a run of ticks you can jump into. */
+/**
+ * The progress rail.
+ *
+ * A desktop gets all three chapters named across the top, each sized by how
+ * many slides it holds, with the current one naming where you are. A phone has
+ * no room for that, so it gets one line saying the same thing and a single
+ * unbroken bar of ticks underneath.
+ */
 function Rail({ i, onJump }: { i: number; onJump: (n: number) => void }) {
+  const here = SLIDES[i];
+  const chapter = CHAPTERS.find((c) => c.id === here.chapter);
   return (
     <nav className="rail" aria-label="Slides">
-      {CHAPTERS.map((c) => {
-        const idx = SLIDES.map((s, n) => ({ s, n })).filter(
-          ({ s }) => s.chapter === c.id,
-        );
-        const active = SLIDES[i].chapter === c.id;
-        return (
-          <div className={`rail-ch${active ? " on" : ""}`} key={c.id}>
-            <button
-              type="button"
-              className="rail-name"
-              onClick={() => onJump(idx[0].n)}
+      <p className="rail-where">
+        <span>{chapter?.name}</span>
+        <em>{here.marker}</em>
+        <i>
+          {i + 1}/{SLIDES.length}
+        </i>
+      </p>
+      <div className="rail-chs">
+        {CHAPTERS.map((c) => {
+          const idx = SLIDES.map((s, n) => ({ s, n })).filter(
+            ({ s }) => s.chapter === c.id,
+          );
+          const active = here.chapter === c.id;
+          return (
+            // Sized by slide count, so a tick is the same width everywhere and
+            // a two-slide chapter does not get the same room as a five.
+            <div
+              className={`rail-ch${active ? " on" : ""}`}
+              key={c.id}
+              style={{ flexGrow: idx.length }}
             >
-              {c.name}
-              {active ? (
-                <em>
-                  {SLIDES[i].marker}
-                  <i>
-                    {idx.findIndex((x) => x.n === i) + 1}/{idx.length}
-                  </i>
-                </em>
-              ) : null}
-            </button>
-            <span className="rail-ticks">
-              {idx.map(({ n }) => (
-                <button
-                  key={n}
-                  type="button"
-                  className={`tickm${n === i ? " now" : ""}${n < i ? " done" : ""}`}
-                  onClick={() => onJump(n)}
-                  title={SLIDES[n].marker}
-                  aria-label={`Slide ${n + 1}: ${SLIDES[n].title}`}
-                  aria-current={n === i ? "step" : undefined}
-                />
-              ))}
-            </span>
-          </div>
-        );
-      })}
+              <button
+                type="button"
+                className="rail-name"
+                onClick={() => onJump(idx[0].n)}
+              >
+                {c.name}
+                {active ? (
+                  <em>
+                    {here.marker}
+                    <i>
+                      {idx.findIndex((x) => x.n === i) + 1}/{idx.length}
+                    </i>
+                  </em>
+                ) : null}
+              </button>
+              <span className="rail-ticks">
+                {idx.map(({ n }) => (
+                  <button
+                    key={n}
+                    type="button"
+                    className={`tickm${n === i ? " now" : ""}${n < i ? " done" : ""}`}
+                    onClick={() => onJump(n)}
+                    title={SLIDES[n].marker}
+                    aria-label={`Slide ${n + 1}: ${SLIDES[n].title}`}
+                    aria-current={n === i ? "step" : undefined}
+                  />
+                ))}
+              </span>
+            </div>
+          );
+        })}
+      </div>
     </nav>
   );
 }
