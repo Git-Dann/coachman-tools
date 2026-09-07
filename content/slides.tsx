@@ -7,6 +7,7 @@ import { PeopleModel } from "@/components/PeopleModel";
 import { HoursModel } from "@/components/HoursModel";
 import { SeasonSim } from "@/components/SeasonSim";
 import { HubSim } from "@/components/HubSim";
+import { CoverScene } from "@/components/CoverScene";
 import { flowGraph, unitGraph } from "./graphs";
 import { STEPS } from "./steps";
 import { HANDOFFS } from "./handoffs";
@@ -18,6 +19,7 @@ import { SYSTEMS, ACCESS_NOTES } from "./systems";
 import { ASSIGNMENTS, PEOPLE, PEOPLE_CAVEAT } from "./people";
 import { HEAVIEST, NO_COVER_STEPS, TOTAL_STEPS, stepTitle, word } from "@/lib/model";
 import { HUB_CAVEAT } from "@/lib/hub";
+import { usePublishStatus } from "@/components/SlideStatus";
 import { TECH } from "./copy";
 
 export type ChapterId = "operations" | "leadership" | "technical";
@@ -167,6 +169,18 @@ function VanPlayer() {
   const [i, setI] = useState(0);
   const [name, detail, livesIn, handledBy, reEntry] = VAN[i];
   const last = VAN.length - 1;
+  const soFar = VAN.slice(0, i + 1).reduce((t, v) => t + Number(v[4]), 0);
+
+  usePublishStatus({
+    headline: name,
+    detail,
+    tone: reEntry === "0" ? "moss" : "flag",
+    figures: [
+      { value: `${i + 1}/${VAN.length}`, label: "stage" },
+      { value: reEntry, label: "re-entry here", tone: reEntry === "0" ? "moss" : "flag" },
+      { value: String(soFar), label: "re-entry so far", tone: soFar > 0 ? "flag" : "moss" },
+    ],
+  });
   return (
     <div className="van">
       <div className="track">
@@ -245,25 +259,24 @@ export const SLIDES: Slide[] = [
     title: "One caravan. Nowhere to look it up.",
     line: "A day at the order desk in Hull. Here is what we found.",
     body: () => (
-      <Big
-        items={[
-          { n: "16", l: "steps to get one caravan out" },
-          { n: "20", l: "points the same work is done twice", tone: "flag" },
-          { n: "14", l: "places hold a piece of one van", tone: "flag" },
-          { n: "3", l: "seasons before the record is gone", tone: "flag" },
-        ]}
-      />
+      <div className="cover">
+        <CoverScene />
+        <Big
+          items={[
+            { n: "16", l: "steps to get one caravan out" },
+            { n: "20", l: "points the same work is done twice", tone: "flag" },
+            { n: "14", l: "places hold a piece of one van", tone: "flag" },
+            { n: "3", l: "seasons before the record is gone", tone: "flag" },
+          ]}
+        />
+      </div>
     ),
-    aside: () => <p className="hint">Arrow keys, or swipe. Every claim has its evidence one click away.</p>,
-    footnote: "Recorded on site, 3 September 2026",
-  },
-  {
-    id: "unit",
-    chapter: "operations",
-    title: "Where does one caravan live?",
-    line: "In fourteen places at once. None of them is the caravan.",
-    body: () => <UnitMap />,
-    aside: () => <p className="hint">Drag to turn it. Click anything to see what it holds.</p>,
+    aside: () => (
+      <p className="hint">
+        Fourteen places each hold a piece of one caravan, and none of them is
+        the caravan. Arrow keys to move on.
+      </p>
+    ),
     detailLabel: "What the business runs on",
     detail: () => (
       <>
@@ -284,6 +297,7 @@ export const SLIDES: Slide[] = [
         />
       </>
     ),
+    footnote: "Recorded on site, 3 September 2026",
   },
   {
     id: "throttle",
@@ -324,6 +338,18 @@ export const SLIDES: Slide[] = [
           unstable. Past double, the hours stop adding up as well.
         </p>
         <p className="caveat">{HUB_CAVEAT}</p>
+        <h3>The twenty, in the order they happen</h3>
+        <ol className="hl">
+          {HANDOFFS.map(([t, d]) => (
+            <li key={t}>
+              <span>
+                <b>{t}</b>
+                <span>{d}</span>
+              </span>
+            </li>
+          ))}
+        </ol>
+        <h3>All sixteen steps</h3>
         <StepList />
       </>
     ),
@@ -392,50 +418,6 @@ export const SLIDES: Slide[] = [
     ),
   },
   {
-    id: "handoffs",
-    chapter: "operations",
-    title: "Twenty times, the same work.",
-    line: "Not twenty inefficiencies in general. Twenty nameable ones.",
-    body: () => (
-      <>
-        <Big
-          items={[
-            { n: "20", l: "re-entry points", tone: "flag" },
-            { n: "5", l: "in invoicing alone", tone: "flag" },
-            { n: "4,000", l: "sheets of paper a year", tone: "flag" },
-          ]}
-        />
-        <Quote
-          text="You are doing a lot of the same work over and over again to achieve the same result."
-          cite="Said in the room"
-        />
-      </>
-    ),
-    detailLabel: "All twenty, in order",
-    detail: () => (
-      <ol className="hl">
-        {HANDOFFS.map(([t, d]) => (
-          <li key={t}>
-            <span>
-              <b>{t}</b>
-              <span>{d}</span>
-            </span>
-          </li>
-        ))}
-      </ol>
-    ),
-  },
-  {
-    id: "flowmap",
-    chapter: "operations",
-    title: "Where the trail keeps breaking.",
-    line: "Every dashed link is information leaving the system by hand.",
-    body: () => <FlowMap />,
-    aside: () => <p className="hint">Drag to turn it. Bigger means more re-entry inside that step.</p>,
-    detailLabel: "All sixteen steps",
-    detail: () => <StepList />,
-  },
-  {
     id: "van",
     chapter: "operations",
     title: "Follow one caravan.",
@@ -461,6 +443,19 @@ export const SLIDES: Slide[] = [
             `${a.because}${a.source === "inferred" ? " (our reading, needs confirming)" : ""}`,
           ])}
         />
+        <h3>The three steps nobody else can do</h3>
+        <ul className="pl n">
+          {NO_COVER_STEPS.map((n) => {
+            const a = ASSIGNMENTS.find((x) => x.stepId === n);
+            return (
+              <li key={n}>
+                <span>
+                  <strong>{stepTitle(n)}.</strong> {a?.because}
+                </span>
+              </li>
+            );
+          })}
+        </ul>
         <h3>The people</h3>
         <ul className="pl">
           {PEOPLE.map((p) => (
@@ -471,47 +466,6 @@ export const SLIDES: Slide[] = [
               </span>
             </li>
           ))}
-        </ul>
-      </>
-    ),
-  },
-  {
-    id: "nocover",
-    chapter: "leadership",
-    title: `${word(NO_COVER_STEPS.length).replace(/^t/, "T")} steps have nobody else.`,
-    line: "Invoicing, sending the invoices, and the book.",
-    body: () => (
-      <>
-        <Big
-          items={[
-            { n: String(NO_COVER_STEPS.length), l: "steps with no cover at all", tone: "flag" },
-            { n: String(HEAVIEST.steps.length), l: `of ${TOTAL_STEPS} steps on one desk`, tone: "flag" },
-            { n: "2", l: "people can get into the system", tone: "brass" },
-          ]}
-        />
-        <Quote text="She can never really go on holiday." cite="Said in the room, about invoicing" />
-      </>
-    ),
-    detailLabel: "The steps with no cover",
-    detail: () => (
-      <>
-        <p>
-          Attempts to train others have not stuck, because it is not done often
-          enough by anyone else to build confidence, and everyone else is
-          already stretched. This is not a training problem to solve with a
-          document.
-        </p>
-        <ul className="pl n">
-          {NO_COVER_STEPS.map((s) => {
-            const a = ASSIGNMENTS.find((x) => x.stepId === s);
-            return (
-              <li key={s}>
-                <span>
-                  <strong>{stepTitle(s)}.</strong> {a?.because}
-                </span>
-              </li>
-            );
-          })}
         </ul>
       </>
     ),
@@ -553,40 +507,22 @@ export const SLIDES: Slide[] = [
     chapter: "leadership",
     title: "Four things are broken.",
     line: "Not missing. Broken, and already paid for.",
-    wide: true,
     body: () => (
-      <div className="cards two">
-        {FAULTS.map(([n, tag, d, c]) => (
-          <div className="card f" key={n}>
-            <p className="card-t">{n}</p>
-            <span className="card-tag">{tag}</span>
-            <p>{d}</p>
+      <div className="fill two">
+        {FAULTS.map(([n, tag, d, c], i) => (
+          <div className="panel flag" key={n}>
+            <span className="panel-n">{`0${i + 1}`}</span>
+            <p className="panel-t">{n}</p>
+            <p className="panel-d">{d}</p>
             {c ? (
-              <p>
+              <p className="panel-d">
                 <strong>{c}</strong>
               </p>
             ) : null}
+            <span className="panel-tag">{tag}</span>
           </div>
         ))}
       </div>
-    ),
-  },
-  {
-    id: "stages",
-    chapter: "technical",
-    title: "Twelve stages, not sixteen steps.",
-    line: "Five of theirs exist only to move paper. Those go.",
-    body: () => (
-      <Table cols={["Stage", "What it means"]} rows={STAGES.map(([n, m], i) => [`${i + 1}. ${n}`, m])} />
-    ),
-    aside: () => (
-      <Big
-        items={[
-          { n: "16", l: "steps today" },
-          { n: "12", l: "stages proposed", tone: "moss" },
-          { n: "0", l: "re-entry points", tone: "moss" },
-        ]}
-      />
     ),
   },
   {
@@ -594,16 +530,13 @@ export const SLIDES: Slide[] = [
     chapter: "technical",
     title: "Three decisions carry the weight.",
     line: "A product for this kind of manufacturer. Coachman first.",
-    wide: true,
     body: () => (
-      <div className="dec">
+      <div className="fill three">
         {TECH.decisions.rows.map((d) => (
-          <div className="decrow" key={d.n}>
-            <div className="decn">{d.n}</div>
-            <div>
-              <p className="dect">{d.t}</p>
-              <p>{d.p[0]}</p>
-            </div>
+          <div className="panel brass" key={d.n}>
+            <span className="panel-n">{`0${d.n}`}</span>
+            <p className="panel-t">{d.t}</p>
+            <p className="panel-d">{d.p[0]}</p>
           </div>
         ))}
       </div>
@@ -631,29 +564,27 @@ export const SLIDES: Slide[] = [
     title: "What we need from you.",
     line: "Five things, and one decision.",
     body: () => (
-      <ul className="pl q big">
-        <li>
-          <span>The pack: screens, reports, spreadsheets, example documents.</span>
-        </li>
-        <li>
-          <span>Access to the current system, and a copy to work against.</span>
-        </li>
-        <li>
-          <span>Build times per model, the working week, shutdown dates.</span>
-        </li>
-        <li>
-          <span>Which accounts system version is in use.</span>
-        </li>
-        <li>
-          <span>A decision on the 2027 season as the changeover.</span>
-        </li>
-      </ul>
-    ),
-    aside: () => (
-      <Quote
-        text="We are building a car. Get the shell in first, then the suspension and the intricate bits come later."
-        cite="Said in the room"
-      />
+      <div className="fill three">
+        {[
+          ["The pack", "Screens, the reports and spreadsheets in use, example documents.", "moss"],
+          ["Access, and a copy", "The current system, plus a copy so nothing is ever tested on live dealer data.", "flag"],
+          ["The calendar", "Build times per model, the working week, this season's shutdown dates.", "moss"],
+          ["The accounts version", "Which one is in use. It is the only permanent integration.", "moss"],
+          ["A decision", "The 2027 season as the changeover.", "brass"],
+        ].map(([t, d, tone], i) => (
+          <div className={`panel ${tone}`} key={t}>
+            <span className="panel-n">{`0${i + 1}`}</span>
+            <p className="panel-t">{t}</p>
+            <p className="panel-d">{d}</p>
+          </div>
+        ))}
+        <div className="panel">
+          <Quote
+            text="We are building a car. Get the shell in first, then the suspension and the intricate bits come later."
+            cite="Said in the room"
+          />
+        </div>
+      </div>
     ),
     detailLabel: "Still to settle",
     detail: () => (

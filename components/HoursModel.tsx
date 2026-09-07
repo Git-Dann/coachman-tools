@@ -9,6 +9,7 @@ import {
 } from "@/content/model";
 import { fmt } from "@/lib/format";
 import { useLocal } from "@/lib/useLocal";
+import { usePublishStatus } from "./SlideStatus";
 
 /**
  * Four adjustable rows off the volumes given on the day.
@@ -26,6 +27,18 @@ export function HoursModel() {
   });
   const total = rows.reduce((n, r) => n + r.hours, 0);
   const share = Math.round((total / HOURS_PER_PERSON) * 100);
+
+  usePublishStatus({
+    headline: `${share}% of one person's year, on four tasks.`,
+    detail:
+      "Their own estimate for what the first three wish-list items would give back was about twenty per cent.",
+    tone: share >= 20 ? "flag" : "brass",
+    figures: [
+      { value: fmt(total), label: "hours a year" },
+      { value: `${share}%`, label: "of one person", tone: "flag" },
+      { value: "20%", label: "their own estimate" },
+    ],
+  });
 
   return (
     <div className="model-block">

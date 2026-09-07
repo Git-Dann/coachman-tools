@@ -19,6 +19,7 @@ import {
   type Job,
 } from "@/lib/hub";
 import { fmt } from "@/lib/format";
+import { usePublishStatus } from "./SlideStatus";
 
 type Mode = "today" | "proposed";
 
@@ -422,6 +423,32 @@ export function HubSim({ mode }: { mode: Mode }) {
   }, []);
 
   const proposed = mode === "proposed";
+
+  /* The rail carries the live reading, so the right column moves as you drive. */
+  usePublishStatus({
+    headline: proposed ? "Nothing is entered twice." : `${v.label}.`,
+    detail: proposed
+      ? "Twelve stages, no re-entry, so the work per caravan stops growing and the desk stops being the ceiling."
+      : v.said,
+    tone: proposed ? "moss" : h > 0.55 ? "flag" : h > 0.3 ? "brass" : "moss",
+    figures: [
+      {
+        value: fmt(Math.round(l.hours)),
+        label: "hours a year on the desk",
+        tone: proposed ? "moss" : "text",
+      },
+      {
+        value: fmt(Math.round(l.duplicatedHours)),
+        label: "of those, entered again",
+        tone: l.duplicatedHours > 0 ? "flag" : "moss",
+      },
+      {
+        value: fmt(l.throttled),
+        label: "turned away",
+        tone: l.throttled > 0 ? "flag" : "moss",
+      },
+    ],
+  });
 
   return (
     <div className="hub">

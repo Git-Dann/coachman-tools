@@ -21,6 +21,7 @@ import {
   labelSprite,
   stationPositions,
 } from "@/lib/scene";
+import { usePublishStatus } from "./SlideStatus";
 
 type Mode = "today" | "proposed";
 
@@ -454,6 +455,32 @@ export function SeasonSim() {
   const wasted = wastedShare(view);
   const jam = worst(view);
   const worstWait = worstByWait(view);
+  const started = view.workTicks + view.waitTicks > 0;
+
+  usePublishStatus({
+    headline: !started
+      ? "Press play."
+      : mode === "proposed"
+        ? "Nothing is queueing."
+        : `${Math.round(wasted * 100)}% of a caravan's time is spent waiting.`,
+    detail: !started
+      ? "Caravans go in at one end. Watch where they stop."
+      : mode === "proposed"
+        ? "Same orders, twelve stages. No station holds anyone up."
+        : worstWait
+          ? `${worstWait.station.short} swallows more of it than anywhere else, because five of the twenty re-entry points sit there.`
+          : undefined,
+    tone: mode === "proposed" ? "moss" : wasted > 0.2 ? "flag" : "brass",
+    figures: [
+      { value: String(view.released - view.shipped), label: "in the process at once" },
+      { value: String(view.shipped), label: "out of the door", tone: "moss" },
+      {
+        value: jam && jam.queue > 0 ? String(jam.queue) : "0",
+        label: jam && jam.queue > 0 ? `waiting at ${jam.station.short}` : "waiting",
+        tone: jam && jam.queue > 2 ? "flag" : "moss",
+      },
+    ],
+  });
 
   return (
     <div className="ssim">

@@ -6,6 +6,7 @@ import { absenceImpact, stepTitle } from "@/lib/model";
 import { peopleGraph } from "@/content/graphs";
 import { NodeMap3D } from "./NodeMap3D";
 import { useLocal } from "@/lib/useLocal";
+import { usePublishStatus } from "./SlideStatus";
 
 /**
  * Take someone out and watch the work move.
@@ -26,6 +27,26 @@ export function PeopleModel({ withMap = true }: { withMap?: boolean }) {
     1,
     ...impact.loads.map((l) => l.steps.length + l.absorbed.length),
   );
+
+  const heaviest = impact.loads.find((x) => !x.away);
+  usePublishStatus({
+    headline: away.length === 0
+      ? "Everything runs, on one pair of hands."
+      : impact.stopped.length > 0
+        ? `${impact.stopped.length} ${impact.stopped.length === 1 ? "step stops" : "steps stop"} dead.`
+        : "Everything still runs, slower.",
+    detail: away.length === 0
+      ? "Click anyone below to take them out, and watch where their work goes."
+      : impact.stopped.length > 0
+        ? "Nobody else was described as able to do them. Not slower. Stopped."
+        : "The work moves onto people who already have a full desk.",
+    tone: impact.stopped.length > 0 ? "flag" : away.length ? "brass" : "steel",
+    figures: [
+      { value: String(impact.stopped.length), label: "steps stop", tone: impact.stopped.length ? "flag" : "moss" },
+      { value: String(impact.slowed.length), label: "carry on, slower", tone: impact.slowed.length ? "brass" : "moss" },
+      { value: String(16 - impact.stopped.length - impact.slowed.length), label: "unaffected" },
+    ],
+  });
 
   const toggle = (id: string) =>
     setAway((prev) =>

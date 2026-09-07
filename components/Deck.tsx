@@ -2,6 +2,11 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { CHAPTERS, SLIDES, type ChapterId } from "@/content/slides";
+import {
+  SlideStatusProvider,
+  StatusPanel,
+  useSlideStatus,
+} from "./SlideStatus";
 
 /**
  * The deck.
@@ -12,6 +17,15 @@ import { CHAPTERS, SLIDES, type ChapterId } from "@/content/slides";
  * who wants the evidence can go and get it.
  */
 export function Deck({ start }: { start: ChapterId }) {
+  return (
+    <SlideStatusProvider>
+      <DeckInner start={start} />
+    </SlideStatusProvider>
+  );
+}
+
+function DeckInner({ start }: { start: ChapterId }) {
+  const { status } = useSlideStatus();
   const first = SLIDES.findIndex((s) => s.chapter === start);
   const [i, setI] = useState(first < 0 ? 0 : first);
   const [detail, setDetail] = useState(false);
@@ -109,6 +123,7 @@ export function Deck({ start }: { start: ChapterId }) {
                 {slide.title}
               </h1>
               {slide.line ? <p className="slide-line">{slide.line}</p> : null}
+              {status ? <StatusPanel status={status} /> : null}
               {Aside ? (
                 <div className="aside-body">
                   <Aside />

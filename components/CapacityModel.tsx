@@ -11,6 +11,7 @@ import {
 } from "@/lib/model";
 import { fmt } from "@/lib/format";
 import { useLocal } from "@/lib/useLocal";
+import { usePublishStatus } from "./SlideStatus";
 
 const TONE_VAR = {
   moss: "var(--color-moss)",
@@ -41,6 +42,21 @@ export function CapacityModel() {
 
   const ceiling = Math.max(cap.demand, cap.factory, cap.admin, BASE_UNITS * 2);
   const pct = (v: number) => `${Math.min(100, (v / ceiling) * 100)}%`;
+
+  usePublishStatus({
+    headline: cap.binding === "admin"
+      ? "The order desk is the ceiling, not the factory."
+      : cap.binding === "factory"
+        ? "The factory is the ceiling here."
+        : "Everything demanded gets out.",
+    detail: verdict.said,
+    tone: cap.turnedAway > 0 ? "flag" : "moss",
+    figures: [
+      { value: fmt(cap.throughput), label: "get out" },
+      { value: fmt(cap.turnedAway), label: "turned away", tone: cap.turnedAway ? "flag" : "moss" },
+      { value: fmt(cap.factory), label: "the factory could build", tone: "moss" },
+    ],
+  });
 
   const set = (k: keyof typeof state, v: number) =>
     setState((s) => ({ ...s, [k]: v }));
