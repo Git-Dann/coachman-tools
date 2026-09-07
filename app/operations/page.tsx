@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import { Shell } from "@/components/Shell";
-import { Operations } from "@/components/views/Operations";
+import { Masthead } from "@/components/Masthead";
+import { Deck } from "@/components/Deck";
 import { viewById } from "@/content/views";
 
 const meta = viewById("operations");
@@ -12,8 +12,9 @@ export const metadata: Metadata = {
 
 export default function Page() {
   return (
-    <Shell view="operations">
-      <Operations />
-    </Shell>
+    <>
+      <Masthead />
+      <Deck start="operations" />
+    </>
   );
 }

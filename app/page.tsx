@@ -1,25 +1,18 @@
 import type { Metadata } from "next";
-import { Shell } from "@/components/Shell";
-import { Operations } from "@/components/views/Operations";
-import { DEFAULT_VIEW, viewById } from "@/content/views";
-
-/**
- * The default view. Operations, for the people doing the work.
- *
- * Each view is also reachable at its own path, so the right person gets the
- * right link.
- */
-const meta = viewById(DEFAULT_VIEW);
+import { Masthead } from "@/components/Masthead";
+import { Deck } from "@/components/Deck";
 
 export const metadata: Metadata = {
   title: "Coachman Order Flow",
-  description: meta.description,
+  description:
+    "How an order gets from a dealer to an invoice, and what we would build instead.",
 };
 
 export default function Page() {
   return (
-    <Shell view={DEFAULT_VIEW}>
-      <Operations />
-    </Shell>
+    <>
+      <Masthead />
+      <Deck start="operations" />
+    </>
   );
 }
