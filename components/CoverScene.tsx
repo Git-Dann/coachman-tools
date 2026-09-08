@@ -33,7 +33,7 @@ const HOLDERS = [
  * where the same caravan is solid and the same kind of objects are laid out in
  * a measured ring joined to the middle. Chaos, then structure.
  */
-export function CoverScene() {
+export function CoverScene({ bare = false }: { bare?: boolean } = {}) {
   const mountRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -41,14 +41,19 @@ export function CoverScene() {
     if (!mount) return;
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    /*
+     * Transparent, so the page shows through and the scene has no edge. See the
+     * note in HubSim: painting the canvas the page's own ink does not work,
+     * because tone mapping lands the same value darker inside the canvas.
+     */
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setClearColor(0x000000, 0);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     mount.appendChild(renderer.domElement);
     renderer.domElement.style.display = "block";
 
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(PALETTE.ink);
     scene.fog = new THREE.Fog(PALETTE.ink, 18, 60);
     const camera = new THREE.PerspectiveCamera(44, 1, 0.1, 200);
 
@@ -115,7 +120,13 @@ export function CoverScene() {
       );
       scene.add(mesh);
 
+      /*
+       * On the hero the scene is a backdrop behind a headline, so the names
+       * come off: fourteen labels competing with a hundred-point display type
+       * is two things shouting.
+       */
       const label = labelSprite(name, "#A8B8C4", false, true);
+      label.visible = !bare;
       scene.add(label);
       labels.push(label);
       shards.push({ mesh, a, r, y, s: i });
@@ -126,7 +137,11 @@ export function CoverScene() {
     // bloom pass here; it put a haze over the whole picture. OutputPass has to
     // stay, or the composer double-encodes the colours and everything greys out.
     const composer = new EffectComposer(renderer);
-    composer.addPass(new RenderPass(scene, camera));
+    const renderPass = new RenderPass(scene, camera);
+    // Clear the composer's target to transparent as well, or it starts opaque
+    // and the transparency never reaches the page.
+    renderPass.clearAlpha = 0;
+    composer.addPass(renderPass);
     composer.addPass(new OutputPass());
 
     /*
@@ -236,7 +251,7 @@ export function CoverScene() {
       shardGeo.dispose();
       mount.removeChild(renderer.domElement);
     };
-  }, []);
+  }, [bare]);
 
   return <div className="cover-scene" ref={mountRef} aria-hidden="true" />;
 }

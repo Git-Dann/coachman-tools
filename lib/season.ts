@@ -179,3 +179,36 @@ export function worstStation(
 export function inProgress(s: Season): number {
   return s.released - s.shipped;
 }
+
+/* ------------------------------------------------------------------ replay */
+
+const cache = new Map<string, Season[]>();
+
+/**
+ * Every state of a season, tick by tick.
+ *
+ * The page scrolls the simulation rather than playing it, and scrolling goes
+ * both ways, so there has to be a state for every position rather than a
+ * machine you can only push forwards. It is twenty-two caravans over a couple
+ * of hundred ticks, so working the whole thing out once and keeping it is
+ * cheaper than being clever about it.
+ */
+export function replay(
+  mode: "today" | "proposed",
+  releaseEvery = 2,
+  ticks = 260,
+): Season[] {
+  const key = `${mode}:${releaseEvery}:${ticks}`;
+  const had = cache.get(key);
+  if (had) return had;
+
+  const frames: Season[] = [newSeason(mode)];
+  let s = frames[0];
+  for (let i = 0; i < ticks; i++) {
+    s = advance(s, releaseEvery);
+    frames.push(s);
+    if (finished(s)) break;
+  }
+  cache.set(key, frames);
+  return frames;
+}

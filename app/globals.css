@@ -3,32 +3,60 @@
 /* ------------------------------------------------------------------ theme */
 
 @theme {
-  --color-ink: #0c1116;
-  --color-surface: #141b22;
-  --color-surface-2: #1c2530;
-  --color-surface-3: #233040;
-  --color-line: #263039;
-  --color-line-2: #35424e;
-  --color-text: #e9eff3;
-  --color-text-2: #9dafba;
-  --color-text-3: #6c7d89;
-  --color-brass: #d9a24b;
-  --color-steel: #74a8c4;
-  --color-flag: #e4593c;
-  --color-moss: #6fae7f;
+  /*
+   * Gitwork's palette, taken from gitwork.co.uk rather than invented here.
+   *
+   *   ink #0B0C0F   ink-2 #2A2D33   line #1F2024
+   *   paper #F6F4EE paper-2 #EDEAE0 mute #6B7280
+   *   electric #1B5BFF  signal #4F46E5  signal-deep #2D2891
+   *   signal-soft #E0DEFA  green #1B8F4A
+   *
+   * The page runs on ink with paper for type, because every figure on it draws
+   * on a dark ground. The named roles below are what the figures ask for, so
+   * remapping them here brings the whole thing onto the brand at once.
+   */
+  --color-ink: #0b0c0f;
+  --color-surface: #14161a;
+  --color-surface-2: #1a1d22;
+  --color-surface-3: #23262c;
+  --color-line: #1f2024;
+  --color-line-2: #2a2d33;
+  --color-text: #f6f4ee;
+  --color-text-2: #b9b6ad;
+  --color-text-3: #7c828c;
 
-  --font-sans: var(--font-chivo), "Helvetica Neue", Arial, sans-serif;
+  /* Accent. Gitwork's electric blue does the work amber used to. */
+  --color-brass: #4d7dff;
+  /* Neutral data colour, for work in progress. */
+  --color-steel: #8f9bb3;
+  /*
+   * Alert. Gitwork's palette has no red, and this deck needs one for waiting
+   * and for broken. Chosen to sit with the brand and to hold up against the
+   * steel it is read next to.
+   */
+  --color-flag: #e0483f;
+  /* Gitwork green, lifted enough to read on ink. */
+  --color-moss: #3fae6d;
+
+  --color-electric: #1b5bff;
+  --color-signal: #4f46e5;
+  --color-signal-deep: #2d2891;
+  --color-signal-soft: #e0defa;
+  --color-paper: #f6f4ee;
+  --color-paper-2: #edeae0;
+
+  --font-sans: var(--font-inter), "Helvetica Neue", Arial, sans-serif;
   --font-mono: var(--font-plex-mono), ui-monospace, Consolas, monospace;
   --font-serif: var(--font-newsreader), Georgia, serif;
 }
 
 /* Washes and dims. Derived from the palette, not separate decisions. */
 :root {
-  --brass-dim: #8a6626;
-  --brass-wash: #241b0c;
-  --steel-wash: #12222b;
-  --flag-wash: #2a1410;
-  --moss-wash: #122116;
+  --brass-dim: #2b4894;
+  --brass-wash: #101a33;
+  --steel-wash: #171b22;
+  --flag-wash: #2a1512;
+  --moss-wash: #10221a;
   --r: 3px;
 }
 
@@ -44,6 +72,8 @@ html {
   color-scheme: dark;
   background: var(--color-ink);
   scroll-behavior: smooth;
+  /* The mast is fixed, so anchors have to clear it. */
+  scroll-padding-top: 72px;
   -webkit-text-size-adjust: 100%;
 }
 
@@ -55,8 +85,6 @@ body {
   font-size: 16px;
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
-  /* Room for the fixed bottom nav on mobile. */
-  padding-bottom: calc(96px + env(safe-area-inset-bottom));
   /* The page body must never scroll sideways. */
   overflow-x: hidden;
 }
@@ -2347,7 +2375,7 @@ ul.pl.big li::before {
   border: 1px solid var(--color-line);
   border-radius: var(--r);
   overflow: hidden;
-  background: var(--color-ink);
+  background: transparent;
   cursor: grab;
 }
 .ssim-stage:active {
@@ -2470,7 +2498,7 @@ ul.pl.big li::before {
   border: 1px solid var(--color-line);
   border-radius: var(--r);
   overflow: hidden;
-  background: var(--color-ink);
+  background: transparent;
   cursor: grab;
 }
 .hub-stage:active {
@@ -2646,6 +2674,7 @@ ul.pl.big li::before {
   display: block;
   width: 100%;
   height: 100%;
+  background: transparent;
 }
 .cover .bignums {
   flex: none;
@@ -3896,5 +3925,650 @@ ul.pl.big li::before {
   }
   .slide-grid.scene .tl-ctl {
     padding: 12px 20px;
+  }
+}
+
+
+/* ══════════════════════════════════════════════════════════ the one page */
+
+/*
+ * Gitwork's colours, Gitwork's typeface, and one gesture to drive it.
+ *
+ * The deck this replaced needed you to find a play button, a slider and a next
+ * arrow, eleven times over. A page needs a scroll wheel, which everybody
+ * already has, and the figures move because you are going past them.
+ */
+
+/* ------------------------------------------------------------------ grain */
+
+/*
+ * A tile of filtered noise laid over everything. It is what stops a flat dark
+ * ground reading as a screenshot of a terminal. Four lines, rather than a
+ * subscription to a texture library.
+ */
+.grain {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+  opacity: 0.05;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 180px 180px;
+}
+@media (prefers-reduced-transparency: reduce) {
+  .grain {
+    display: none;
+  }
+}
+
+/* -------------------------------------------------------------- scrollbar */
+
+.scrollbar {
+  position: fixed;
+  inset: 0 0 auto 0;
+  height: 2px;
+  z-index: 70;
+  transform-origin: 0 50%;
+  background: linear-gradient(
+    90deg,
+    var(--color-signal) 0%,
+    var(--color-electric) 100%
+  );
+}
+
+/* ------------------------------------------------------------------- mast */
+
+.mast {
+  position: fixed;
+  inset: 0 0 auto 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 14px 26px;
+  background: color-mix(in srgb, var(--color-ink) 72%, transparent);
+  backdrop-filter: blur(14px) saturate(140%);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-paper) 7%, transparent);
+}
+.mastmark {
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+  text-decoration: none;
+}
+.mastmark b {
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--color-paper);
+}
+.mastmark span,
+.mastnav a {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-text-3);
+  text-decoration: none;
+}
+.mastnav {
+  display: flex;
+  gap: 22px;
+}
+.mastnav a:hover,
+.mastnav a.on {
+  color: var(--color-paper);
+}
+@media (max-width: 720px) {
+  .mastnav {
+    display: none;
+  }
+}
+
+/* ------------------------------------------------------------------- type */
+
+.display {
+  margin: 0 0 22px;
+  font-size: clamp(42px, 7.2vw, 108px);
+  line-height: 0.94;
+  letter-spacing: -0.045em;
+  font-weight: 800;
+  color: var(--color-paper);
+  text-wrap: balance;
+}
+.display em {
+  font-style: normal;
+  /* The turn in the sentence, in the brand's own blue. */
+  background: linear-gradient(
+    100deg,
+    var(--color-signal-soft) 0%,
+    var(--color-brass) 55%,
+    var(--color-signal) 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.h2 {
+  margin: 0 0 16px;
+  font-size: clamp(28px, 3.6vw, 52px);
+  line-height: 1.02;
+  letter-spacing: -0.035em;
+  font-weight: 800;
+  color: var(--color-paper);
+  text-wrap: balance;
+}
+.eyebrow,
+.kicker {
+  margin: 0 0 18px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-text-3);
+}
+.eyebrow span,
+.kicker {
+  color: var(--color-brass);
+}
+.eyebrow span {
+  font-weight: 500;
+}
+.lede {
+  margin: 0 0 34px;
+  max-width: 44ch;
+  font-size: clamp(16px, 1.5vw, 21px);
+  line-height: 1.5;
+  color: var(--color-text-2);
+}
+.body {
+  margin: 0;
+  max-width: 46ch;
+  font-size: 15.5px;
+  line-height: 1.62;
+  color: var(--color-text-2);
+}
+
+/* ------------------------------------------------------------------- hero */
+
+.hero {
+  position: relative;
+  min-height: 100svh;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+}
+.hero-scene {
+  position: absolute;
+  inset: 0;
+}
+.hero-scene .cover-scene {
+  position: absolute;
+  inset: 0;
+  width: auto;
+  height: auto;
+  min-height: 0;
+  max-height: none;
+  aspect-ratio: auto;
+  border: 0;
+  border-radius: 0;
+}
+/*
+ * A wash over the scene so the type has something to sit on, built out of the
+ * brand's blues rather than a flat black scrim.
+ */
+.hero-wash {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(
+      120% 80% at 12% 74%,
+      color-mix(in srgb, var(--color-signal-deep) 46%, transparent) 0%,
+      transparent 62%
+    ),
+    linear-gradient(
+      92deg,
+      var(--color-ink) 0%,
+      color-mix(in srgb, var(--color-ink) 78%, transparent) 46%,
+      transparent 78%
+    );
+}
+.hero-in {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 120px 34px 80px;
+}
+@media (max-width: 620px) {
+  .hero-in {
+    padding: 104px 18px 64px;
+  }
+  .chapter,
+  .band-in {
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+  .band {
+    padding: 72px 0;
+  }
+  .asklist li {
+    padding: 18px 16px;
+    gap: 14px;
+  }
+}
+.hero-figs {
+  list-style: none;
+  margin: 0 0 40px;
+  padding: 0;
+  display: grid;
+  /* Two up on a phone rather than four stacked rows of one. */
+  grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+  gap: 24px 24px;
+  max-width: 780px;
+}
+.hero-figs b {
+  display: block;
+  font-size: clamp(30px, 3.2vw, 46px);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  color: var(--color-paper);
+  font-variant-numeric: tabular-nums;
+}
+.hero-figs .bad b {
+  color: var(--color-flag);
+}
+.hero-figs span {
+  display: block;
+  margin-top: 9px;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-text-3);
+  line-height: 1.45;
+}
+.scroll-cue {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--color-text-3);
+}
+.scroll-cue::after {
+  content: "";
+  display: block;
+  width: 1px;
+  height: 46px;
+  margin-top: 12px;
+  background: linear-gradient(var(--color-brass), transparent);
+}
+
+/* --------------------------------------------------------------- chapters */
+
+.chapter {
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 92px 34px 26px;
+}
+.chapter p {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  margin: 0;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--color-line);
+  font-size: clamp(19px, 2vw, 26px);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--color-paper);
+}
+.chapter span {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.14em;
+  color: var(--color-brass);
+}
+
+/* ----------------------------------------------------- the driven figures */
+
+.drive {
+  position: relative;
+}
+/*
+ * The figure is pinned for the length of the pass, so the page scrolls and the
+ * picture stays put and changes. That is the whole trick.
+ */
+.drive-pin {
+  position: sticky;
+  top: 0;
+  height: 100svh;
+  display: grid;
+  align-content: center;
+  overflow: hidden;
+}
+.stagegrid {
+  width: 100%;
+  max-width: 1500px;
+  margin: 0 auto;
+  padding: 62px 34px 30px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 350px;
+  gap: 40px;
+  align-items: center;
+  min-height: 0;
+}
+.stagefig {
+  min-width: 0;
+  min-height: 0;
+}
+.stagesay {
+  min-width: 0;
+}
+@media (max-width: 1023px) {
+  .stagegrid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 22px;
+    padding: 84px 18px 24px;
+    align-content: center;
+  }
+  .stagesay {
+    order: -1;
+  }
+  .stagesay .body {
+    display: none;
+  }
+}
+
+/*
+ * Inside a pinned stage every figure is the same shape: the picture takes the
+ * room it is given, and its readings sit under it.
+ */
+.stagefig .hub,
+.stagefig .cover,
+.stagefig .tl,
+.stagefig .journey,
+.stagefig .pgrid,
+.stagefig .ceil {
+  height: min(74svh, 720px);
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin: 0;
+}
+.stagefig .hub-stage {
+  background: transparent;
+  position: relative;
+  flex: 1 1 auto;
+  width: auto;
+  height: auto;
+  min-height: 0;
+  max-height: none;
+  aspect-ratio: auto;
+  border: 0;
+  border-radius: 0;
+}
+.stagefig .tl-view,
+.stagefig .journey-view,
+.stagefig .pgrid-view,
+.stagefig .ceil-view {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  display: flex;
+  align-items: center;
+}
+.stagefig .hub-hud,
+.stagefig .tl-hud,
+.stagefig .journey-hud,
+.stagefig .ceil-hud,
+.stagefig .tl-key,
+.stagefig .pg-key {
+  flex: none;
+  margin: 0;
+  border-top: 1px solid var(--color-line);
+}
+.stagefig .hub-say,
+.stagefig .hub-ctl,
+.stagefig .journey-ctl,
+.stagefig .pg-ctl,
+.stagefig .tl-ctl,
+.stagefig .ceil-ctl,
+.stagefig .bignums {
+  display: none;
+}
+/* Except the ones that are the comparison rather than a transport control. */
+.stagefig .tl-ctl {
+  display: flex;
+  flex: none;
+  padding: 12px 0 0;
+}
+
+/* ------------------------------------------------------------------ bands */
+
+.band {
+  padding: 108px 0;
+}
+.band.alt {
+  background: var(--color-surface);
+  border-block: 1px solid var(--color-line);
+}
+.band.ask {
+  background:
+    radial-gradient(
+      100% 90% at 82% 8%,
+      color-mix(in srgb, var(--color-signal-deep) 40%, transparent) 0%,
+      transparent 60%
+    ),
+    var(--color-ink);
+}
+.band-in {
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 0 34px;
+}
+.band-fig {
+  margin-top: 40px;
+}
+
+/* ------------------------------------------------------------------ cards */
+
+.cardgrid {
+  list-style: none;
+  margin: 46px 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+.cardgrid.three {
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+.fcard {
+  height: 100%;
+  padding: 26px 24px 28px;
+  border: 1px solid var(--color-line);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--color-surface) 70%, transparent);
+}
+.fcard.lift {
+  border-color: color-mix(in srgb, var(--color-brass) 34%, var(--color-line));
+}
+.fnum {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin: 0 0 14px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  color: var(--color-brass);
+}
+.fnum i {
+  font-style: normal;
+  text-transform: uppercase;
+  color: var(--color-text-3);
+}
+.fcard.first .fnum i {
+  color: var(--color-flag);
+}
+.fcard h3 {
+  margin: 0 0 12px;
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: -0.024em;
+  line-height: 1.2;
+  color: var(--color-paper);
+}
+.fcard p {
+  margin: 0;
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: var(--color-text-2);
+}
+.fwhy {
+  margin-top: 14px !important;
+  padding-top: 14px;
+  border-top: 1px solid var(--color-line);
+  color: var(--color-paper) !important;
+  font-weight: 500;
+}
+
+/* -------------------------------------------------------------- the asks */
+
+.asklist {
+  list-style: none;
+  margin: 46px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 1px;
+  background: var(--color-line);
+  border: 1px solid var(--color-line);
+  border-radius: 10px;
+  overflow: hidden;
+  max-width: 880px;
+}
+.asklist li {
+  display: flex;
+  gap: 22px;
+  padding: 22px 24px;
+  background: var(--color-ink);
+}
+.asknum {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: var(--color-brass);
+  padding-top: 4px;
+  flex: none;
+}
+.asklist b {
+  display: block;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.022em;
+  color: var(--color-paper);
+}
+.asklist i {
+  display: block;
+  margin-top: 5px;
+  font-style: normal;
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: var(--color-text-2);
+}
+.pull {
+  margin: 48px 0 0;
+  max-width: 720px;
+  padding-left: 26px;
+  border-left: 2px solid var(--color-brass);
+}
+.pull p {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: clamp(21px, 2.4vw, 30px);
+  line-height: 1.34;
+  color: var(--color-paper);
+}
+.pull cite {
+  display: block;
+  margin-top: 16px;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-style: normal;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-text-3);
+}
+
+/* ----------------------------------------------------------------- footer */
+
+.foot {
+  /* The deck left a bare `footer` rule behind that turns this into a flex row
+     and knocks the gutter out. Reset it rather than inherit a dead layout. */
+  display: block;
+  margin: 0;
+  gap: 0;
+  font-family: var(--font-sans);
+  font-size: 16px;
+  letter-spacing: normal;
+  padding: 74px 0 90px;
+  border-top: 1px solid var(--color-line);
+}
+.footmark {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin: 0 0 16px;
+}
+.footmark b {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  color: var(--color-paper);
+}
+.footmark span {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-text-3);
+}
+.footnote {
+  margin: 0 0 22px;
+  max-width: 56ch;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--color-text-3);
+}
+.foottop {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-brass);
+  text-decoration: none;
+}
+.foottop:hover {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+/* Nothing on the page is pinned or animated if the machine asked for still. */
+@media (prefers-reduced-motion: reduce) {
+  .drive-pin {
+    position: relative;
+    height: auto;
+  }
+  .drive {
+    height: auto !important;
   }
 }

@@ -63,8 +63,10 @@ const LANE_TOP = BAR_TOP + BAR_H + 30;
 const LANE_H = 52;
 const H = LANE_TOP + LANES.length * LANE_H + 52;
 
-export function VanJourney() {
-  const [at, setAt] = useState(0);
+export function VanJourney({ drive }: { drive?: number } = {}) {
+  const [own, setOwn] = useState(0);
+  /* On the page the scroll walks the caravan through its twelve stages. */
+  const driven = drive !== undefined;
 
   const stages = useMemo(
     () =>
@@ -78,6 +80,14 @@ export function VanJourney() {
       })),
     [],
   );
+
+  const at = driven
+    ? Math.min(
+        VAN.length - 1,
+        Math.floor(Math.max(0, (drive! - 0.08) / 0.84) * VAN.length),
+      )
+    : own;
+  const setAt = setOwn;
 
   const colW = (W - GUT - PAD_R) / stages.length;
   const cx = (i: number) => GUT + colW * (i + 0.5);

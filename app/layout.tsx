@@ -1,12 +1,15 @@
 import type { Metadata, Viewport } from "next";
-import { Chivo, IBM_Plex_Mono, Newsreader } from "next/font/google";
+import { IBM_Plex_Mono, Inter, Newsreader } from "next/font/google";
 import "./globals.css";
 
-/** Headings and UI. */
-const chivo = Chivo({
+/**
+ * Inter, because it is what Gitwork's own site runs on. Used across the whole
+ * range: tight and heavy for the display type, plain for reading.
+ */
+const inter = Inter({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800"],
-  variable: "--font-chivo",
+  weight: ["400", "500", "600", "700", "800", "900"],
+  variable: "--font-inter",
   display: "swap",
 });
 
@@ -29,17 +32,17 @@ const newsreader = Newsreader({
 
 export const metadata: Metadata = {
   title: {
-    default: "Coachman Order Flow",
+    default: "Coachman Order Flow · Gitwork",
     template: "%s",
   },
   description:
-    "How an order gets from a dealer to an invoice, and what we would build instead. Gitwork Group, Coachman FY26/27.",
+    "How an order gets from a dealer to an invoice, and what we would build instead. Gitwork for Coachman, FY26/27.",
   /* Contains a client's operational detail and named staff. */
   robots: { index: false, follow: false, nocache: true },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0C1116",
+  themeColor: "#0B0C0F",
   colorScheme: "dark",
   width: "device-width",
   initialScale: 1,
@@ -52,7 +55,7 @@ export default function RootLayout({
   return (
     <html
       lang="en-GB"
-      className={`${chivo.variable} ${plexMono.variable} ${newsreader.variable}`}
+      className={`${inter.variable} ${plexMono.variable} ${newsreader.variable}`}
     >
       <body>{children}</body>
     </html>

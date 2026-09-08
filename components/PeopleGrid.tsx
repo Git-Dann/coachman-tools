@@ -27,8 +27,16 @@ import { usePublishStatus } from "./SlideStatus";
 
 type State = "held" | "picked" | "stopped";
 
-export function PeopleGrid() {
-  const [away, setAway] = useLocal<string[]>("away", []);
+export function PeopleGrid({ drive }: { drive?: number } = {}) {
+  const [own, setOwn] = useLocal<string[]>("away", []);
+  /*
+   * On the page, scrolling past takes the desk out. Halfway through the pass
+   * the person holding twelve of the sixteen steps goes away, which is the
+   * whole point of the slide and no longer needs anybody to find a button.
+   */
+  const driven = drive !== undefined;
+  const away = driven ? (drive! > 0.45 ? ["sales-admin"] : []) : own;
+  const setAway = setOwn;
   const impact = useMemo(() => absenceImpact(away), [away]);
 
   /** The name against each step now, and how it got there. */

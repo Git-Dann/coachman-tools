@@ -31,12 +31,29 @@ const PAD_R = 232;
 const PAD_T = 34;
 const PAD_B = 46;
 
-export function CeilingChart() {
-  const [state, setState] = useLocal("capacity", {
+export function CeilingChart({ drive }: { drive?: number } = {}) {
+  const [own, setOwn] = useLocal("capacity", {
     demand: BASE_UNITS,
     lines: 1,
     hands: 2,
   });
+  /*
+   * On the page, scrolling raises the demand and then buys a second and third
+   * production line, so you watch the factory's ceiling lift away while the
+   * desk's stays exactly where it was.
+   */
+  const driven = drive !== undefined;
+  const state = driven
+    ? {
+        demand: Math.round(
+          (BASE_UNITS + Math.min(1, Math.max(0, (drive! - 0.1) / 0.5)) * BASE_UNITS * 2) /
+            250,
+        ) * 250,
+        lines: 1 + Math.floor(Math.min(1, Math.max(0, (drive! - 0.55) / 0.4)) * 2.99),
+        hands: 2,
+      }
+    : own;
+  const setState = setOwn;
 
   const cap = useMemo(
     () => capacity(state.demand, state.lines, state.hands),

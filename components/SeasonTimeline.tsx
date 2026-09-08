@@ -7,6 +7,7 @@ import {
   finished,
   inProgress,
   newSeason,
+  replay,
   wastedShare,
   worstStation,
   type Season,
@@ -44,12 +45,28 @@ const LEFT = 46;
 const TOP = 16;
 const BARS_H = 62;
 
-export function SeasonTimeline() {
+export function SeasonTimeline({ drive }: { drive?: number } = {}) {
   const [mode, setMode] = useState<"today" | "proposed">("today");
   const [running, setRunning] = useState(false);
-  const [season, setSeason] = useState<Season>(() => newSeason("today"));
-  const ref = useRef(season);
-  ref.current = season;
+  const [own, setOwn] = useState<Season>(() => newSeason("today"));
+  const ref = useRef(own);
+  ref.current = own;
+
+  /*
+   * On the page the scroll runs the season, so the state comes out of a replay
+   * indexed by how far through the section you are. Scrolling goes both ways,
+   * which a machine you can only push forwards cannot do.
+   */
+  const frames = useMemo(() => (drive === undefined ? null : replay(mode)), [
+    drive === undefined,
+    mode,
+  ]);
+  const season =
+    frames && drive !== undefined
+      ? frames[Math.min(frames.length - 1, Math.round(drive * (frames.length - 1)))]
+      : own;
+  const driven = drive !== undefined;
+  const setSeason = setOwn;
 
   const reset = useCallback((m: "today" | "proposed") => {
     const s = newSeason(m);
@@ -67,12 +84,12 @@ export function SeasonTimeline() {
   }, []);
 
   useEffect(() => {
-    if (!running) return;
+    if (!running || driven) return;
     const id = window.setInterval(() => {
       if (!step()) setRunning(false);
     }, TICK);
     return () => window.clearInterval(id);
-  }, [running, step]);
+  }, [running, step, driven]);
 
   const wasted = wastedShare(season);
   const worst = worstStation(season);
@@ -258,36 +275,47 @@ export function SeasonTimeline() {
       </div>
 
       <div className="tl-ctl">
-        <button
-          type="button"
-          className={`play${running ? " on" : ""}`}
-          onClick={() => setRunning((r) => !r)}
-          disabled={done || season.tick >= MAX_TICKS}
-        >
-          {running
-            ? "Pause"
-            : done
-              ? "Season done"
-              : season.tick
-                ? "Resume"
-                : "Run the season"}
-        </button>
-        {/* One tick at a time, so it can be talked through rather than watched
-            going past. */}
-        <button
-          type="button"
-          className="mini big"
-          onClick={() => {
-            setRunning(false);
-            step();
-          }}
-          disabled={done || season.tick >= MAX_TICKS}
-        >
-          Step
-        </button>
-        <button type="button" className="mini big" onClick={() => reset(mode)}>
-          Reset
-        </button>
+        {/*
+          * On the page, scroll runs the season, so the transport goes away and
+          * only the comparison is left. On its own it keeps play and step, so
+          * it can still be talked through a tick at a time.
+          */}
+        {driven ? null : (
+          <>
+            <button
+              type="button"
+              className={`play${running ? " on" : ""}`}
+              onClick={() => setRunning((r) => !r)}
+              disabled={done || season.tick >= MAX_TICKS}
+            >
+              {running
+                ? "Pause"
+                : done
+                  ? "Season done"
+                  : season.tick
+                    ? "Resume"
+                    : "Run the season"}
+            </button>
+            <button
+              type="button"
+              className="mini big"
+              onClick={() => {
+                setRunning(false);
+                step();
+              }}
+              disabled={done || season.tick >= MAX_TICKS}
+            >
+              Step
+            </button>
+            <button
+              type="button"
+              className="mini big"
+              onClick={() => reset(mode)}
+            >
+              Reset
+            </button>
+          </>
+        )}
         <div className="tgl inline compact" role="group" aria-label="Process">
           <button
             type="button"

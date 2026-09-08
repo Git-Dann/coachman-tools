@@ -8,15 +8,20 @@ import * as THREE from "three";
  * component owns the lifecycle and calls dispose() on unmount.
  */
 
+/*
+ * The same values the stylesheet uses, so a canvas has no visible edge against
+ * the page it sits on. Gitwork's ink, and Gitwork's electric blue where the old
+ * palette had amber.
+ */
 export const PALETTE = {
-  ink: 0x0c1116,
-  surface: 0x141b22,
-  steel: 0x74a8c4,
-  brass: 0xd9a24b,
-  flag: 0xe4593c,
-  moss: 0x6fae7f,
-  text: 0xe9eff3,
-  dim: 0x35424e,
+  ink: 0x0b0c0f,
+  surface: 0x14161a,
+  steel: 0x8f9bb3,
+  brass: 0x4d7dff,
+  flag: 0xe0483f,
+  moss: 0x3fae6d,
+  text: 0xf6f4ee,
+  dim: 0x2a2d33,
 };
 
 /**

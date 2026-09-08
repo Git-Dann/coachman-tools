@@ -43,9 +43,19 @@ type Mode = "today" | "proposed";
  * The paired proposed process has no stacks and stays green however many you
  * add, then pulls back to show the same thing running anywhere.
  */
-export function HubSim({ mode }: { mode: Mode }) {
+export function HubSim({ mode, drive }: { mode: Mode; drive?: number }) {
   const mountRef = useRef<HTMLDivElement>(null);
-  const [mult, setMult] = useState(1);
+  const [own, setOwn] = useState(1);
+  /*
+   * On the page the scroll adds the caravans. The first fifth of the pass is
+   * left at today's volume so there is a moment to read the ring before it
+   * starts warming up.
+   */
+  const driven = drive !== undefined;
+  const mult = driven
+    ? 1 + Math.round(Math.max(0, (drive! - 0.18) / 0.82) * 99)
+    : own;
+  const setMult = setOwn;
   const [globe, setGlobe] = useState(false);
   const [picked, setPicked] = useState<number | null>(null);
   const pickedRef = useRef<number | null>(null);
@@ -85,10 +95,19 @@ export function HubSim({ mode }: { mode: Mode }) {
     if (!mount) return;
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
+    /*
+     * Transparent, so the page shows through and the scene has no edge.
+     * Painting the canvas the same ink as the page does not work: tone mapping
+     * and the output pass take a run at it on the way out, so the same value
+     * lands darker inside the canvas than outside it and you get a visible
+     * rectangle.
+     */
     const renderer = new THREE.WebGLRenderer({
       antialias: true,
+      alpha: true,
       powerPreference: "high-performance",
     });
+    renderer.setClearColor(0x000000, 0);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.0;
@@ -96,7 +115,6 @@ export function HubSim({ mode }: { mode: Mode }) {
     renderer.domElement.style.display = "block";
 
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(PALETTE.ink);
     scene.fog = new THREE.Fog(PALETTE.ink, 26, 90);
 
     const camera = new THREE.PerspectiveCamera(42, 1, 0.1, 400);
@@ -452,7 +470,11 @@ export function HubSim({ mode }: { mode: Mode }) {
     // between them hazed the whole ring. OutputPass is not optional: without it
     // the composer double-encodes the colours and the scene washes out grey.
     const composer = new EffectComposer(renderer);
-    composer.addPass(new RenderPass(scene, camera));
+    const renderPass = new RenderPass(scene, camera);
+    // Clear the composer's target to transparent as well, or it starts opaque
+    // and the transparency never reaches the page.
+    renderPass.clearAlpha = 0;
+    composer.addPass(renderPass);
     composer.addPass(new OutputPass());
 
     /*
@@ -866,7 +888,7 @@ export function HubSim({ mode }: { mode: Mode }) {
           * the only thing it would move is a number in the strip below, and a
           * control that does nothing you can see is worse than no control.
           */}
-        {globe ? null : (
+        {globe || driven ? null : (
           <label className="volume">
             <span>
               <b>{mult}&times;</b> today&rsquo;s volume
