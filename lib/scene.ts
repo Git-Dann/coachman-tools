@@ -13,16 +13,65 @@ import * as THREE from "three";
  * the page it sits on. Gitwork's ink, and Gitwork's electric blue where the old
  * palette had amber.
  */
-export const PALETTE = {
-  ink: 0x0b0c0f,
-  surface: 0x14161a,
-  steel: 0x8f9bb3,
-  brass: 0x4d7dff,
-  flag: 0xe0483f,
-  moss: 0x3fae6d,
-  text: 0xf6f4ee,
-  dim: 0x2a2d33,
+/**
+ * The colours the scenes draw with, for whichever ground they are on.
+ *
+ * The page runs on paper by default and ink by choice, and a scene built for
+ * one is illegible on the other: a white caravan disappears on paper, and an
+ * ink one disappears on ink. So the palette is a pair, and a scene rebuilds
+ * when the page changes mode.
+ */
+export type Ground = "light" | "dark";
+
+const GROUNDS: Record<Ground, Record<string, number>> = {
+  light: {
+    ink: 0xf6f4ee,
+    surface: 0xffffff,
+    steel: 0x3d5580,
+    brass: 0x1b5bff,
+    flag: 0xc0342b,
+    moss: 0x157339,
+    text: 0x0b0c0f,
+    dim: 0xb9b1a0,
+    /* the caravan on paper: a dark body so it reads as an object */
+    body: 0x3a4250,
+    glass: 0x151922,
+    label: 0x2a2d33,
+    line: 0x9aa2b0,
+  },
+  dark: {
+    ink: 0x0b0c0f,
+    surface: 0x14161a,
+    steel: 0x8f9bb3,
+    brass: 0x6f95ff,
+    flag: 0xe2564c,
+    moss: 0x4cb87a,
+    text: 0xf6f4ee,
+    dim: 0x2a2d33,
+    body: 0xf2f6f8,
+    glass: 0x0d1117,
+    label: 0xc6d5df,
+    line: 0x2f333b,
+  },
 };
+
+/**
+ * The live palette.
+ *
+ * Mutated in place rather than passed down, because every scene reads a dozen
+ * of these and threading a palette through each one buys nothing: they all
+ * rebuild together anyway.
+ */
+export const PALETTE: Record<string, number> = { ...GROUNDS.dark };
+
+export function setGround(g: Ground) {
+  Object.assign(PALETTE, GROUNDS[g]);
+}
+
+/** A palette colour as a CSS hex string, for canvas-drawn labels. */
+export function hex(name: string): string {
+  return `#${(PALETTE[name] ?? 0).toString(16).padStart(6, "0")}`;
+}
 
 /**
  * A caravan.

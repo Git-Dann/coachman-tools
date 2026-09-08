@@ -7,11 +7,14 @@ import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
 import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass.js";
 import {
   PALETTE,
+  hex,
+  setGround,
   caravanGeometry,
   fitDistance,
   labelSprite,
   sizeFixedLabel,
 } from "@/lib/scene";
+import { useGround } from "./scroll";
 
 /** The fourteen places that each hold a piece of one caravan. */
 const HOLDERS = [
@@ -35,8 +38,10 @@ const HOLDERS = [
  */
 export function CoverScene({ bare = false }: { bare?: boolean } = {}) {
   const mountRef = useRef<HTMLDivElement>(null);
+  const ground = useGround();
 
   useEffect(() => {
+    setGround(ground);
     const mount = mountRef.current;
     if (!mount) return;
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -57,7 +62,14 @@ export function CoverScene({ bare = false }: { bare?: boolean } = {}) {
     scene.fog = new THREE.Fog(PALETTE.ink, 18, 60);
     const camera = new THREE.PerspectiveCamera(44, 1, 0.1, 200);
 
-    scene.add(new THREE.AmbientLight(0x7f94a6, 0.5));
+    // Less ambient lift on paper: a bright ground already fills the shadows,
+    // and the same values that model an object against black flatten it here.
+    scene.add(
+      new THREE.AmbientLight(
+        ground === "light" ? 0xffffff : 0x7f94a6,
+        ground === "light" ? 0.72 : 0.5,
+      ),
+    );
     const key = new THREE.DirectionalLight(0xe8f0f6, 1.9);
     key.position.set(-10, 18, 12);
     scene.add(key);
@@ -79,7 +91,7 @@ export function CoverScene({ bare = false }: { bare?: boolean } = {}) {
     const edges = new THREE.LineSegments(
       new THREE.EdgesGeometry(vanGeo, 22),
       new THREE.LineBasicMaterial({
-        color: 0xb9cad6,
+        color: PALETTE.label,
         transparent: true,
         opacity: 0.75,
       }),
@@ -125,7 +137,7 @@ export function CoverScene({ bare = false }: { bare?: boolean } = {}) {
        * come off: fourteen labels competing with a hundred-point display type
        * is two things shouting.
        */
-      const label = labelSprite(name, "#A8B8C4", false, true);
+      const label = labelSprite(name, hex("label"), false, true);
       label.visible = !bare;
       scene.add(label);
       labels.push(label);
@@ -251,7 +263,7 @@ export function CoverScene({ bare = false }: { bare?: boolean } = {}) {
       shardGeo.dispose();
       mount.removeChild(renderer.domElement);
     };
-  }, [bare]);
+  }, [bare, ground]);
 
   return <div className="cover-scene" ref={mountRef} aria-hidden="true" />;
 }

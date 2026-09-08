@@ -163,3 +163,24 @@ export function ScrollBar() {
   const scaleX = useTransform(w, (v) => v);
   return <motion.div className="scrollbar" style={{ scaleX }} aria-hidden />;
 }
+
+/**
+ * Which ground the page is on, and a re-render when it changes.
+ *
+ * The WebGL scenes cannot read a CSS variable, so they need telling. Including
+ * this in a scene's effect dependencies is what makes it rebuild in the new
+ * colours when somebody flips the page over.
+ */
+export function useGround(): "light" | "dark" {
+  const [g, setG] = useState<"light" | "dark">("dark");
+  useEffect(() => {
+    const el = document.documentElement;
+    const read = () =>
+      setG(el.dataset.theme === "dark" ? "dark" : "light");
+    read();
+    const obs = new MutationObserver(read);
+    obs.observe(el, { attributes: true, attributeFilter: ["data-theme"] });
+    return () => obs.disconnect();
+  }, []);
+  return g;
+}

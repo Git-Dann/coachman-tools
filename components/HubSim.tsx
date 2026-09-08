@@ -10,7 +10,9 @@ import {
   caravanGeometry,
   fitDistance,
   labelSprite,
+  hex,
   ringGeometry,
+  setGround,
   sizeFixedLabel,
 } from "@/lib/scene";
 import {
@@ -25,6 +27,7 @@ import {
   type Job,
 } from "@/lib/hub";
 import { fmt } from "@/lib/format";
+import { useGround } from "./scroll";
 import { STEPS } from "@/content/steps";
 import { HANDOFFS } from "@/content/handoffs";
 import { HANDOFF_STEP } from "@/content/people";
@@ -45,6 +48,7 @@ type Mode = "today" | "proposed";
  */
 export function HubSim({ mode, drive }: { mode: Mode; drive?: number }) {
   const mountRef = useRef<HTMLDivElement>(null);
+  const ground = useGround();
   const [own, setOwn] = useState(1);
   /*
    * On the page the scroll adds the caravans. The first fifth of the pass is
@@ -93,6 +97,7 @@ export function HubSim({ mode, drive }: { mode: Mode; drive?: number }) {
   useEffect(() => {
     const mount = mountRef.current;
     if (!mount) return;
+    setGround(ground);
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
     /*
@@ -119,14 +124,26 @@ export function HubSim({ mode, drive }: { mode: Mode; drive?: number }) {
 
     const camera = new THREE.PerspectiveCamera(42, 1, 0.1, 400);
 
-    scene.add(new THREE.AmbientLight(0x7e93a5, 0.5));
+    // A bright ground fills its own shadows, so paper needs a plain white lift
+    // rather than the cool one that models an object against black.
+    scene.add(
+      new THREE.AmbientLight(
+        ground === "light" ? 0xffffff : 0x7e93a5,
+        ground === "light" ? 0.78 : 0.5,
+      ),
+    );
     const key = new THREE.DirectionalLight(0xe6eef4, 1.7);
     key.position.set(-12, 24, 12);
     scene.add(key);
     const rim = new THREE.DirectionalLight(0x74a8c4, 0.5);
     rim.position.set(14, 6, -14);
     scene.add(rim);
-    const centre = new THREE.PointLight(0xcfe0ea, 26, 20, 2);
+    const centre = new THREE.PointLight(
+      0xcfe0ea,
+      ground === "light" ? 10 : 26,
+      20,
+      2,
+    );
     centre.position.set(0.5, 7, 3);
     scene.add(centre);
 
@@ -157,7 +174,7 @@ export function HubSim({ mode, drive }: { mode: Mode; drive?: number }) {
     const padGeo = new THREE.CylinderGeometry(0.82, 0.82, 0.1, 26);
     const plateGeo = new THREE.BoxGeometry(1.0, 0.075, 0.72);
     const lineMat = new THREE.LineBasicMaterial({
-      color: 0x2a3743,
+      color: PALETTE.line,
       transparent: true,
       opacity: 0.85,
     });
@@ -188,7 +205,7 @@ export function HubSim({ mode, drive }: { mode: Mode; drive?: number }) {
         const pad = new THREE.Mesh(
           padGeo,
           new THREE.MeshStandardMaterial({
-            color: 0x9dafba,
+            color: PALETTE.steel,
             emissive: 0x000000,
             emissiveIntensity: 0.5,
             roughness: 0.5,
@@ -205,7 +222,7 @@ export function HubSim({ mode, drive }: { mode: Mode; drive?: number }) {
           const plate = new THREE.Mesh(
             plateGeo,
             new THREE.MeshStandardMaterial({
-              color: 0xd9a24b,
+              color: PALETTE.brass,
               emissive: 0x000000,
               roughness: 0.65,
             }),
@@ -231,7 +248,7 @@ export function HubSim({ mode, drive }: { mode: Mode; drive?: number }) {
           const mark = new THREE.Mesh(
             ringGeo,
             new THREE.MeshBasicMaterial({
-              color: 0x6fae7f,
+              color: PALETTE.moss,
               transparent: true,
               opacity: 0.5,
               depthWrite: false,
@@ -246,7 +263,7 @@ export function HubSim({ mode, drive }: { mode: Mode; drive?: number }) {
         // Held at one size on screen. The ring is seen at an angle, so a name
         // on the near side was three times the size of one on the far side and
         // the picture read as noise rather than as twelve equal stages.
-        const label = labelSprite(job.name, "#C6D5DF", false, true);
+        const label = labelSprite(job.name, hex("label"), false, true);
         label.position.set(pos.x * 1.18, 1.05, pos.z * 1.18);
         ring.add(label);
         labels.push(label);
@@ -279,7 +296,7 @@ export function HubSim({ mode, drive }: { mode: Mode; drive?: number }) {
             nodeAt.map((p) => new THREE.Vector3(p.x, 0.06, p.z)),
           ),
           new THREE.LineBasicMaterial({
-            color: 0x4c7f5c,
+            color: PALETTE.moss,
             transparent: true,
             opacity: 0.8,
           }),
@@ -309,7 +326,7 @@ export function HubSim({ mode, drive }: { mode: Mode; drive?: number }) {
         // Fully matt. Any shine at all put what looked like a lens flare on the
         // top left of the sphere.
         new THREE.MeshStandardMaterial({
-          color: 0x0d1620,
+          color: PALETTE.surface,
           roughness: 1,
           metalness: 0,
         }),
@@ -329,7 +346,7 @@ export function HubSim({ mode, drive }: { mode: Mode; drive?: number }) {
         transparent: true,
         depthWrite: false,
         side: THREE.BackSide,
-        uniforms: { tint: { value: new THREE.Color(0x5f8ba6) } },
+        uniforms: { tint: { value: new THREE.Color(PALETTE.steel) } },
         vertexShader: `
           varying vec3 vN;
           varying vec3 vP;
@@ -366,7 +383,7 @@ export function HubSim({ mode, drive }: { mode: Mode; drive?: number }) {
 
     // Latitude and longitude as proper circles rather than a wireframe mesh.
     const gridMat = new THREE.LineBasicMaterial({
-      color: 0x2c4356,
+      color: PALETTE.line,
       transparent: true,
       opacity: 0.5,
     });
@@ -415,7 +432,7 @@ export function HubSim({ mode, drive }: { mode: Mode; drive?: number }) {
       roughness: 0.4,
     });
     const arcMat = new THREE.LineBasicMaterial({
-      color: 0x6fae7f,
+      color: PALETTE.moss,
       transparent: true,
       opacity: 0.6,
     });
@@ -460,7 +477,7 @@ export function HubSim({ mode, drive }: { mode: Mode; drive?: number }) {
       }
     });
 
-    const hullLabel = labelSprite("Hull", "#DCE6EC", true);
+    const hullLabel = labelSprite("Hull", hex("text"), true);
     hullLabel.scale.multiplyScalar(1.5);
     hullLabel.position.copy(hull.clone().normalize().multiplyScalar(R + 1.7));
     globeGroup.add(hullLabel)
@@ -635,7 +652,7 @@ export function HubSim({ mode, drive }: { mode: Mode; drive?: number }) {
           dummy.scale.setScalar(size);
           dummy.updateMatrix();
           fleet.setMatrixAt(i, dummy.matrix);
-          col.setHex(0xf2f6f8);
+          col.setHex(PALETTE.body);
           fleet.setColorAt(i, col);
         }
         fleet.count = n;
@@ -692,7 +709,9 @@ export function HubSim({ mode, drive }: { mode: Mode; drive?: number }) {
           if (link) {
             const lm = link.material as THREE.LineBasicMaterial;
             lm.color.lerp(stacked ? tint : cool, 0.06);
-            lm.opacity = stacked ? 0.28 + st.heat * 0.6 : 0.2;
+            // On paper a hairline at a fifth opacity is not there at all.
+            const floor = ground === "light" ? 0.42 : 0.2;
+            lm.opacity = stacked ? floor + st.heat * 0.5 : floor;
           }
         }
       }
@@ -732,7 +751,7 @@ export function HubSim({ mode, drive }: { mode: Mode; drive?: number }) {
       ringGeo.dispose();
       mount.removeChild(renderer.domElement);
     };
-  }, []);
+  }, [ground]);
 
   const proposed = mode === "proposed";
 

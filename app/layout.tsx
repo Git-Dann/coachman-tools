@@ -1,15 +1,28 @@
 import type { Metadata, Viewport } from "next";
-import { IBM_Plex_Mono, Inter, Newsreader } from "next/font/google";
+import { Fraunces, IBM_Plex_Mono, Inter } from "next/font/google";
 import "./globals.css";
 
 /**
- * Inter, because it is what Gitwork's own site runs on. Used across the whole
- * range: tight and heavy for the display type, plain for reading.
+ * Fraunces at light weight, for everything that is said rather than labelled.
+ *
+ * This is the single biggest thing the page gets from Flaude: display type is a
+ * light serif, not a heavy sans. A 300-weight serif at seventy points reads as
+ * considered; the same words in an 800-weight sans read as a pitch deck.
  */
+const fraunces = Fraunces({
+  subsets: ["latin"],
+  // Variable, so the whole light-to-regular range is available from one file.
+  weight: "variable",
+  style: ["normal", "italic"],
+  variable: "--font-display",
+  display: "swap",
+});
+
+/** Reading, and the interface. Inter, because Gitwork's own site runs on it. */
 const inter = Inter({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800", "900"],
-  variable: "--font-inter",
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-sans-v",
   display: "swap",
 });
 
@@ -17,24 +30,12 @@ const inter = Inter({
 const plexMono = IBM_Plex_Mono({
   subsets: ["latin"],
   weight: ["400", "500"],
-  variable: "--font-plex-mono",
-  display: "swap",
-});
-
-/** The quotes from the call, and nothing else. */
-const newsreader = Newsreader({
-  subsets: ["latin"],
-  weight: ["400"],
-  style: ["italic"],
-  variable: "--font-newsreader",
+  variable: "--font-mono-v",
   display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: {
-    default: "Coachman Order Flow · Gitwork",
-    template: "%s",
-  },
+  title: "Coachman Order Flow · Gitwork",
   description:
     "How an order gets from a dealer to an invoice, and what we would build instead. Gitwork for Coachman, FY26/27.",
   /* Contains a client's operational detail and named staff. */
@@ -42,8 +43,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0B0C0F",
-  colorScheme: "dark",
+  themeColor: "#F6F4EE",
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
@@ -55,8 +55,21 @@ export default function RootLayout({
   return (
     <html
       lang="en-GB"
-      className={`${inter.variable} ${plexMono.variable} ${newsreader.variable}`}
+      className={`${fraunces.variable} ${inter.variable} ${plexMono.variable}`}
+      suppressHydrationWarning
     >
+      <head>
+        {/*
+          * The theme has to be on the element before first paint, or the page
+          * flashes the wrong one. It is a preference read from storage, so it
+          * cannot come from the server.
+          */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try{var t=localStorage.getItem('theme');if(!t){t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}document.documentElement.dataset.theme=t}catch(e){document.documentElement.dataset.theme='light'}`,
+          }}
+        />
+      </head>
       <body>{children}</body>
     </html>
   );

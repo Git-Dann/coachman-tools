@@ -1,5 +1,5 @@
-import { OnePager } from "@/components/OnePager";
+import { Site } from "@/components/Site";
 
 export default function Page() {
-  return <OnePager />;
+  return <Site />;
 }

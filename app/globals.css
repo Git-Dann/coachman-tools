@@ -1,66 +1,105 @@
 @import "tailwindcss";
 
-/* ------------------------------------------------------------------ theme */
+/* ══════════════════════════════════════════════════════════════════ theme */
+
+/*
+ * Gitwork's palette, in two modes.
+ *
+ * Paper is the default. That is the biggest thing the page takes from the
+ * reference: a warm off-white ground with a light serif on it, and dark as a
+ * choice rather than the only option. The values are Gitwork's own, off
+ * gitwork.co.uk:
+ *
+ *   ink #0B0C0F   ink-2 #2A2D33   line #1F2024
+ *   paper #F6F4EE paper-2 #EDEAE0 mute #6B7280
+ *   electric #1B5BFF  signal #4F46E5  signal-deep #2D2891
+ *   signal-soft #E0DEFA  green #1B8F4A
+ *
+ * The figures ask for their colours by role rather than by name, so each mode
+ * only has to answer the same short list of questions and every chart on the
+ * page follows.
+ */
 
 @theme {
-  /*
-   * Gitwork's palette, taken from gitwork.co.uk rather than invented here.
-   *
-   *   ink #0B0C0F   ink-2 #2A2D33   line #1F2024
-   *   paper #F6F4EE paper-2 #EDEAE0 mute #6B7280
-   *   electric #1B5BFF  signal #4F46E5  signal-deep #2D2891
-   *   signal-soft #E0DEFA  green #1B8F4A
-   *
-   * The page runs on ink with paper for type, because every figure on it draws
-   * on a dark ground. The named roles below are what the figures ask for, so
-   * remapping them here brings the whole thing onto the brand at once.
-   */
-  --color-ink: #0b0c0f;
-  --color-surface: #14161a;
-  --color-surface-2: #1a1d22;
-  --color-surface-3: #23262c;
-  --color-line: #1f2024;
-  --color-line-2: #2a2d33;
-  --color-text: #f6f4ee;
-  --color-text-2: #b9b6ad;
-  --color-text-3: #7c828c;
-
-  /* Accent. Gitwork's electric blue does the work amber used to. */
-  --color-brass: #4d7dff;
-  /* Neutral data colour, for work in progress. */
-  --color-steel: #8f9bb3;
-  /*
-   * Alert. Gitwork's palette has no red, and this deck needs one for waiting
-   * and for broken. Chosen to sit with the brand and to hold up against the
-   * steel it is read next to.
-   */
-  --color-flag: #e0483f;
-  /* Gitwork green, lifted enough to read on ink. */
-  --color-moss: #3fae6d;
-
   --color-electric: #1b5bff;
   --color-signal: #4f46e5;
   --color-signal-deep: #2d2891;
   --color-signal-soft: #e0defa;
   --color-paper: #f6f4ee;
   --color-paper-2: #edeae0;
+  --color-inkbrand: #0b0c0f;
 
-  --font-sans: var(--font-inter), "Helvetica Neue", Arial, sans-serif;
-  --font-mono: var(--font-plex-mono), ui-monospace, Consolas, monospace;
-  --font-serif: var(--font-newsreader), Georgia, serif;
+  --font-display: var(--font-display), Georgia, "Times New Roman", serif;
+  --font-sans: var(--font-sans-v), "Helvetica Neue", Arial, sans-serif;
+  --font-mono: var(--font-mono-v), ui-monospace, Consolas, monospace;
+  --font-serif: var(--font-display), Georgia, serif;
 }
 
-/* Washes and dims. Derived from the palette, not separate decisions. */
-:root {
+/* ---------------------------------------------------------------- on paper */
+
+:root,
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  --color-ink: #f6f4ee; /* the ground */
+  --color-surface: #ffffff;
+  --color-surface-2: #edeae0;
+  --color-surface-3: #e3dfd2;
+  --color-line: #e2dcce;
+  --color-line-2: #cfc8b7;
+  --color-text: #0b0c0f;
+  --color-text-2: #4a4e57;
+  --color-text-3: #77797f;
+
+  /* Roles the figures ask for. */
+  --color-brass: #1b5bff; /* the accent */
+  --color-steel: #47618f; /* work in progress */
+  --color-flag: #c0342b; /* waiting, broken */
+  --color-moss: #157339; /* done, proposed */
+
+  --brass-dim: #93aeff;
+  --brass-wash: #e8edff;
+  --steel-wash: #e9edf5;
+  --flag-wash: #fbeae8;
+  --moss-wash: #e6f2ea;
+
+  --shadow-card: 0 1px 2px rgb(11 12 15 / 0.04), 0 12px 34px -12px rgb(11 12 15 / 0.1);
+  --ring: 1px solid rgb(11 12 15 / 0.07);
+  --r: 3px;
+  --r-card: 26px;
+}
+
+/* ----------------------------------------------------------------- at dark */
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --color-ink: #0b0c0f;
+  --color-surface: #14161a;
+  --color-surface-2: #1a1d22;
+  --color-surface-3: #23262c;
+  --color-line: #22242a;
+  --color-line-2: #2f333b;
+  --color-text: #f6f4ee;
+  --color-text-2: #b9b6ad;
+  --color-text-3: #838792;
+
+  --color-brass: #6f95ff;
+  --color-steel: #93a3c2;
+  --color-flag: #e2564c;
+  --color-moss: #4cb87a;
+
   --brass-dim: #2b4894;
-  --brass-wash: #101a33;
+  --brass-wash: #111a33;
   --steel-wash: #171b22;
   --flag-wash: #2a1512;
   --moss-wash: #10221a;
-  --r: 3px;
+
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.4), 0 18px 44px -16px rgb(0 0 0 / 0.6);
+  --ring: 1px solid rgb(246 244 238 / 0.08);
 }
 
-/* ------------------------------------------------------------------- base */
+/* ══════════════════════════════════════════════════════════════════ base */
 
 *,
 *::before,
@@ -69,11 +108,9 @@
 }
 
 html {
-  color-scheme: dark;
   background: var(--color-ink);
   scroll-behavior: smooth;
-  /* The mast is fixed, so anchors have to clear it. */
-  scroll-padding-top: 72px;
+  scroll-padding-top: 88px;
   -webkit-text-size-adjust: 100%;
 }
 
@@ -85,42 +122,24 @@ body {
   font-size: 16px;
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
-  /* The page body must never scroll sideways. */
   overflow-x: hidden;
+  transition: background-color 0.4s, color 0.4s;
 }
 
 :focus-visible {
   outline: 2px solid var(--color-brass);
-  outline-offset: 2px;
+  outline-offset: 3px;
 }
 
 ::selection {
-  background: color-mix(in srgb, var(--color-brass) 35%, transparent);
+  background: color-mix(in srgb, var(--color-brass) 22%, transparent);
   color: var(--color-text);
 }
 
-.wrap {
-  max-width: 1120px;
-  margin: 0 auto;
-  padding: 0 22px;
-}
-
-/* Skip link, so the keyboard route into the content is one press. */
-.skip {
-  position: absolute;
-  left: -9999px;
-  top: 0;
-  z-index: 100;
-  background: var(--color-surface-3);
-  color: var(--color-text);
-  padding: 12px 18px;
-  border-radius: var(--r);
-  font-family: var(--font-mono);
-  font-size: 12px;
-}
-.skip:focus {
-  left: 12px;
-  top: 12px;
+img,
+svg,
+canvas {
+  max-width: 100%;
 }
 
 /* ------------------------------------------------------------------ steps */
@@ -3929,180 +3948,193 @@ ul.pl.big li::before {
 }
 
 
-/* ══════════════════════════════════════════════════════════ the one page */
+
+
+/* ═══════════════════════════════════════════════════════════════ the page */
 
 /*
- * Gitwork's colours, Gitwork's typeface, and one gesture to drive it.
+ * Structure taken from the reference, not its content.
  *
- * The deck this replaced needed you to find a play button, a slider and a next
- * arrow, eleven times over. A page needs a scroll wheel, which everybody
- * already has, and the figures move because you are going past them.
+ *   a pill bar that floats
+ *   a hero: one centred light-serif line with a sweep across it, over a scene
+ *   three cards, each a picture with a name under it
+ *   one tall pinned section, used once, for the thing worth pinning
+ *   three moves, each with its own accent and a picture rising into frame
+ *   the numbers
+ *   what is broken
+ *   what we build
+ *   a call to action on a wash
+ *   a footer in columns
+ *
+ * Section rhythm is the reference's: a 1280 measure, 24px gutters, 96 to 120
+ * between sections, and centred text capped near 60 characters.
  */
 
-/* ------------------------------------------------------------------ grain */
-
-/*
- * A tile of filtered noise laid over everything. It is what stops a flat dark
- * ground reading as a screenshot of a terminal. Four lines, rather than a
- * subscription to a texture library.
- */
-.grain {
-  position: fixed;
-  inset: 0;
-  z-index: 60;
-  pointer-events: none;
-  opacity: 0.05;
-  mix-blend-mode: overlay;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E");
-  background-size: 180px 180px;
+.wrap {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 24px;
 }
-@media (prefers-reduced-transparency: reduce) {
-  .grain {
-    display: none;
+.mid {
+  max-width: 760px;
+  margin: 0 auto;
+  text-align: center;
+}
+.sect {
+  padding: 96px 0;
+}
+@media (min-width: 768px) {
+  .sect {
+    padding: 120px 0;
   }
 }
 
-/* -------------------------------------------------------------- scrollbar */
+/* ------------------------------------------------------------------ type */
 
-.scrollbar {
-  position: fixed;
-  inset: 0 0 auto 0;
-  height: 2px;
-  z-index: 70;
-  transform-origin: 0 50%;
-  background: linear-gradient(
-    90deg,
-    var(--color-signal) 0%,
-    var(--color-electric) 100%
-  );
+.dsp {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 300;
+  font-size: clamp(2.5rem, 6.2vw, 5.25rem);
+  line-height: 1.03;
+  letter-spacing: -0.022em;
+  text-wrap: balance;
+  color: var(--color-text);
+}
+.h2 {
+  margin: 0 0 18px;
+  font-family: var(--font-display);
+  font-weight: 300;
+  font-size: clamp(1.85rem, 3.4vw, 3rem);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+  color: var(--color-text);
+}
+.h3 {
+  margin: 0 0 8px;
+  font-family: var(--font-display);
+  font-weight: 300;
+  font-size: clamp(1.2rem, 1.7vw, 1.5rem);
+  line-height: 1.16;
+  letter-spacing: -0.018em;
+  color: var(--color-text);
+}
+.lede {
+  margin: 0;
+  font-size: clamp(1rem, 1.25vw, 1.125rem);
+  line-height: 1.6;
+  color: var(--color-text-2);
+}
+.note {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.62;
+  color: var(--color-text-2);
+}
+.tag {
+  margin: 0 0 20px;
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-text-3);
 }
 
-/* ------------------------------------------------------------------- mast */
+/* ------------------------------------------------------------------ bar */
 
-.mast {
+.bar {
   position: fixed;
   inset: 0 0 auto 0;
   z-index: 50;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 20px;
-  padding: 14px 26px;
-  background: color-mix(in srgb, var(--color-ink) 72%, transparent);
-  backdrop-filter: blur(14px) saturate(140%);
-  border-bottom: 1px solid color-mix(in srgb, var(--color-paper) 7%, transparent);
+  gap: 16px;
+  padding: 12px 20px;
 }
-.mastmark {
+.bar-in {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 8px 7px 14px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-ink) 76%, transparent);
+  backdrop-filter: blur(16px) saturate(150%);
+  border: var(--ring);
+  box-shadow: var(--shadow-card);
+}
+.bar-mark {
   display: flex;
   align-items: baseline;
-  gap: 9px;
+  gap: 8px;
   text-decoration: none;
+  padding-right: 6px;
 }
-.mastmark b {
-  font-size: 15px;
-  font-weight: 800;
+.bar-mark b {
+  font-size: 0.95rem;
+  font-weight: 700;
   letter-spacing: -0.03em;
-  color: var(--color-paper);
+  color: var(--color-text);
 }
-.mastmark span,
-.mastnav a {
+.bar-mark span,
+.pill {
   font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.14em;
+  font-size: 0.62rem;
+  letter-spacing: 0.13em;
   text-transform: uppercase;
   color: var(--color-text-3);
+}
+.pill {
+  display: inline-flex;
+  align-items: center;
+  height: 34px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 0;
+  background: none;
+  cursor: pointer;
   text-decoration: none;
+  white-space: nowrap;
+  transition: background-color 0.2s, color 0.2s;
 }
-.mastnav {
-  display: flex;
-  gap: 22px;
+.pill:hover {
+  background: var(--color-surface-2);
+  color: var(--color-text);
 }
-.mastnav a:hover,
-.mastnav a.on {
-  color: var(--color-paper);
+.pill.solid {
+  background: var(--color-text);
+  color: var(--color-ink);
 }
-@media (max-width: 720px) {
-  .mastnav {
+.pill.solid:hover {
+  background: var(--color-brass);
+  color: #fff;
+}
+@media (max-width: 860px) {
+  .bar-links {
     display: none;
   }
 }
-
-/* ------------------------------------------------------------------- type */
-
-.display {
-  margin: 0 0 22px;
-  font-size: clamp(42px, 7.2vw, 108px);
-  line-height: 0.94;
-  letter-spacing: -0.045em;
-  font-weight: 800;
-  color: var(--color-paper);
-  text-wrap: balance;
-}
-.display em {
-  font-style: normal;
-  /* The turn in the sentence, in the brand's own blue. */
-  background: linear-gradient(
-    100deg,
-    var(--color-signal-soft) 0%,
-    var(--color-brass) 55%,
-    var(--color-signal) 100%
-  );
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-.h2 {
-  margin: 0 0 16px;
-  font-size: clamp(28px, 3.6vw, 52px);
-  line-height: 1.02;
-  letter-spacing: -0.035em;
-  font-weight: 800;
-  color: var(--color-paper);
-  text-wrap: balance;
-}
-.eyebrow,
-.kicker {
-  margin: 0 0 18px;
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--color-text-3);
-}
-.eyebrow span,
-.kicker {
-  color: var(--color-brass);
-}
-.eyebrow span {
-  font-weight: 500;
-}
-.lede {
-  margin: 0 0 34px;
-  max-width: 44ch;
-  font-size: clamp(16px, 1.5vw, 21px);
-  line-height: 1.5;
-  color: var(--color-text-2);
-}
-.body {
-  margin: 0;
-  max-width: 46ch;
-  font-size: 15.5px;
-  line-height: 1.62;
-  color: var(--color-text-2);
+.bar-links {
+  display: flex;
+  gap: 2px;
 }
 
-/* ------------------------------------------------------------------- hero */
+/* ------------------------------------------------------------------ hero */
 
 .hero {
   position: relative;
   min-height: 100svh;
-  display: flex;
-  align-items: center;
+  display: grid;
+  align-content: center;
   overflow: hidden;
+  padding: 132px 0 72px;
 }
 .hero-scene {
   position: absolute;
   inset: 0;
+  z-index: 0;
 }
 .hero-scene .cover-scene {
   position: absolute;
@@ -4114,138 +4146,178 @@ ul.pl.big li::before {
   aspect-ratio: auto;
   border: 0;
   border-radius: 0;
+  background: transparent;
 }
-/*
- * A wash over the scene so the type has something to sit on, built out of the
- * brand's blues rather than a flat black scrim.
- */
+/* A wash so the line reads, made of the brand's own blue rather than a scrim. */
 .hero-wash {
   position: absolute;
   inset: 0;
+  z-index: 1;
   background:
     radial-gradient(
-      120% 80% at 12% 74%,
-      color-mix(in srgb, var(--color-signal-deep) 46%, transparent) 0%,
-      transparent 62%
+      86% 62% at 50% 46%,
+      color-mix(in srgb, var(--color-ink) 84%, transparent) 0%,
+      color-mix(in srgb, var(--color-ink) 26%, transparent) 74%,
+      transparent 100%
     ),
     linear-gradient(
-      92deg,
+      180deg,
       var(--color-ink) 0%,
-      color-mix(in srgb, var(--color-ink) 78%, transparent) 46%,
-      transparent 78%
+      transparent 22%,
+      transparent 76%,
+      var(--color-ink) 100%
     );
 }
 .hero-in {
   position: relative;
   z-index: 2;
-  width: 100%;
-  max-width: 1320px;
-  margin: 0 auto;
-  padding: 120px 34px 80px;
-}
-@media (max-width: 620px) {
-  .hero-in {
-    padding: 104px 18px 64px;
-  }
-  .chapter,
-  .band-in {
-    padding-left: 18px;
-    padding-right: 18px;
-  }
-  .band {
-    padding: 72px 0;
-  }
-  .asklist li {
-    padding: 18px 16px;
-    gap: 14px;
-  }
-}
-.hero-figs {
-  list-style: none;
-  margin: 0 0 40px;
-  padding: 0;
-  display: grid;
-  /* Two up on a phone rather than four stacked rows of one. */
-  grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
-  gap: 24px 24px;
-  max-width: 780px;
-}
-.hero-figs b {
-  display: block;
-  font-size: clamp(30px, 3.2vw, 46px);
-  font-weight: 800;
-  letter-spacing: -0.04em;
-  line-height: 1;
-  color: var(--color-paper);
-  font-variant-numeric: tabular-nums;
-}
-.hero-figs .bad b {
-  color: var(--color-flag);
-}
-.hero-figs span {
-  display: block;
-  margin-top: 9px;
-  font-family: var(--font-mono);
-  font-size: 9.5px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--color-text-3);
-  line-height: 1.45;
-}
-.scroll-cue {
-  margin: 0;
-  font-family: var(--font-mono);
-  font-size: 9.5px;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: var(--color-text-3);
-}
-.scroll-cue::after {
-  content: "";
-  display: block;
-  width: 1px;
-  height: 46px;
-  margin-top: 12px;
-  background: linear-gradient(var(--color-brass), transparent);
 }
 
-/* --------------------------------------------------------------- chapters */
-
-.chapter {
-  max-width: 1320px;
-  margin: 0 auto;
-  padding: 92px 34px 26px;
+/*
+ * The sweep across the headline.
+ *
+ * One gradient the width of two and a half lines, moved across the text with
+ * the type clipping it. It is the whole flourish on the page and it runs once
+ * on arrival rather than looping, because a headline that shimmers forever is
+ * a distraction from what it says.
+ */
+.sweep {
+  --spread: 130px;
+  background-image:
+    linear-gradient(
+      90deg,
+      transparent calc(50% - var(--spread)),
+      var(--color-brass),
+      transparent calc(50% + var(--spread))
+    ),
+    linear-gradient(var(--color-text), var(--color-text));
+  background-size: 250% 100%, auto;
+  background-repeat: no-repeat, padding-box;
+  background-position: 100% center;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: sweep 2.6s cubic-bezier(0.3, 0.7, 0.3, 1) 0.35s both;
 }
-.chapter p {
+@keyframes sweep {
+  from {
+    background-position: 160% center;
+  }
+  to {
+    background-position: -60% center;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sweep {
+    animation: none;
+    background-position: -60% center;
+  }
+}
+
+.hero-sub {
+  margin: 26px auto 0;
+  max-width: 46ch;
+}
+.hero-cta {
   display: flex;
-  align-items: baseline;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 34px;
+}
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  height: 46px;
+  padding: 0 22px;
+  border-radius: 999px;
+  border: var(--ring);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform 0.2s, background-color 0.2s, border-color 0.2s;
+}
+.btn:hover {
+  transform: translateY(-1px);
+  border-color: var(--color-line-2);
+}
+.btn.go {
+  background: var(--color-text);
+  color: var(--color-ink);
+  border-color: transparent;
+}
+.btn.go:hover {
+  background: var(--color-brass);
+  color: #fff;
+}
+
+/* ------------------------------------------------------------------ cards */
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(268px, 1fr));
   gap: 16px;
-  margin: 0;
-  padding-bottom: 18px;
-  border-bottom: 1px solid var(--color-line);
-  font-size: clamp(19px, 2vw, 26px);
-  font-weight: 700;
-  letter-spacing: -0.03em;
-  color: var(--color-paper);
+  margin-top: 52px;
+  align-items: start;
 }
-.chapter span {
-  font-family: var(--font-mono);
-  font-size: 11px;
+/* A picture with a name under it, the way the reference does its screens. */
+.card {
+  display: block;
+  padding: 0;
+  border-radius: var(--r-card);
+  border: var(--ring);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+  text-decoration: none;
+  transition: transform 0.45s cubic-bezier(0.22, 0.7, 0.25, 1);
+}
+.card:hover {
+  transform: translateY(-3px);
+}
+.card-fig {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  background: var(--color-surface-2);
+}
+.card-say {
+  padding: 18px 20px 22px;
+}
+.card-say b {
+  display: block;
+  font-family: var(--font-display);
   font-weight: 400;
-  letter-spacing: 0.14em;
-  color: var(--color-brass);
+  font-size: 1.06rem;
+  letter-spacing: -0.015em;
+  color: var(--color-text);
+}
+.card-say span {
+  display: block;
+  margin-top: 6px;
+  font-size: 0.86rem;
+  line-height: 1.55;
+  color: var(--color-text-2);
 }
 
-/* ----------------------------------------------------- the driven figures */
+/* --------------------------------------------------------- the pinned one */
 
-.drive {
+/*
+ * Pinning, used once.
+ *
+ * The reference pins a single section and lets everything else simply arrive.
+ * Six pinned figures in a row is a fairground ride, so this is the one that
+ * earns it: the volume goes up and the picture goes red while you hold still.
+ */
+.pin {
   position: relative;
 }
-/*
- * The figure is pinned for the length of the pass, so the page scrolls and the
- * picture stays put and changes. That is the whole trick.
- */
-.drive-pin {
+.pin-in {
   position: sticky;
   top: 0;
   height: 100svh;
@@ -4253,322 +4325,432 @@ ul.pl.big li::before {
   align-content: center;
   overflow: hidden;
 }
-.stagegrid {
+.pin-grid {
   width: 100%;
-  max-width: 1500px;
+  max-width: 1280px;
   margin: 0 auto;
-  padding: 62px 34px 30px;
+  padding: 84px 24px 32px;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 350px;
-  gap: 40px;
+  grid-template-columns: minmax(0, 1fr) 330px;
+  gap: 44px;
   align-items: center;
-  min-height: 0;
-}
-.stagefig {
-  min-width: 0;
-  min-height: 0;
-}
-.stagesay {
-  min-width: 0;
 }
 @media (max-width: 1023px) {
-  .stagegrid {
+  .pin-grid {
     grid-template-columns: minmax(0, 1fr);
-    gap: 22px;
-    padding: 84px 18px 24px;
-    align-content: center;
+    gap: 20px;
+    padding: 104px 18px 28px;
   }
-  .stagesay {
-    order: -1;
-  }
-  .stagesay .body {
+  .pin-say .note {
     display: none;
   }
+  .pin-say {
+    order: -1;
+  }
 }
 
-/*
- * Inside a pinned stage every figure is the same shape: the picture takes the
- * room it is given, and its readings sit under it.
- */
-.stagefig .hub,
-.stagefig .cover,
-.stagefig .tl,
-.stagefig .journey,
-.stagefig .pgrid,
-.stagefig .ceil {
-  height: min(74svh, 720px);
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  margin: 0;
-}
-.stagefig .hub-stage {
-  background: transparent;
-  position: relative;
-  flex: 1 1 auto;
-  width: auto;
-  height: auto;
-  min-height: 0;
-  max-height: none;
-  aspect-ratio: auto;
-  border: 0;
-  border-radius: 0;
-}
-.stagefig .tl-view,
-.stagefig .journey-view,
-.stagefig .pgrid-view,
-.stagefig .ceil-view {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow: auto;
-  display: flex;
-  align-items: center;
-}
-.stagefig .hub-hud,
-.stagefig .tl-hud,
-.stagefig .journey-hud,
-.stagefig .ceil-hud,
-.stagefig .tl-key,
-.stagefig .pg-key {
-  flex: none;
-  margin: 0;
-  border-top: 1px solid var(--color-line);
-}
-.stagefig .hub-say,
-.stagefig .hub-ctl,
-.stagefig .journey-ctl,
-.stagefig .pg-ctl,
-.stagefig .tl-ctl,
-.stagefig .ceil-ctl,
-.stagefig .bignums {
-  display: none;
-}
-/* Except the ones that are the comparison rather than a transport control. */
-.stagefig .tl-ctl {
-  display: flex;
-  flex: none;
-  padding: 12px 0 0;
-}
+/* ----------------------------------------------------------- three moves */
 
-/* ------------------------------------------------------------------ bands */
-
-.band {
-  padding: 108px 0;
-}
-.band.alt {
-  background: var(--color-surface);
-  border-block: 1px solid var(--color-line);
-}
-.band.ask {
-  background:
-    radial-gradient(
-      100% 90% at 82% 8%,
-      color-mix(in srgb, var(--color-signal-deep) 40%, transparent) 0%,
-      transparent 60%
-    ),
-    var(--color-ink);
-}
-.band-in {
-  max-width: 1320px;
-  margin: 0 auto;
-  padding: 0 34px;
-}
-.band-fig {
-  margin-top: 40px;
-}
-
-/* ------------------------------------------------------------------ cards */
-
-.cardgrid {
-  list-style: none;
-  margin: 46px 0 0;
-  padding: 0;
+.moves {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+  margin-top: 56px;
   align-items: start;
 }
-.cardgrid.three {
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+.move {
+  border-radius: var(--r-card);
+  border: var(--ring);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
 }
-.fcard {
-  height: 100%;
-  padding: 26px 24px 28px;
-  border: 1px solid var(--color-line);
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--color-surface) 70%, transparent);
+.move-say {
+  padding: 26px 24px 20px;
 }
-.fcard.lift {
-  border-color: color-mix(in srgb, var(--color-brass) 34%, var(--color-line));
-}
-.fnum {
-  display: flex;
-  align-items: baseline;
-  gap: 12px;
-  margin: 0 0 14px;
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.14em;
+/* One accent per move, the way the reference colours its supporting lines. */
+.move.a .move-say .note {
   color: var(--color-brass);
 }
-.fnum i {
-  font-style: normal;
-  text-transform: uppercase;
-  color: var(--color-text-3);
-}
-.fcard.first .fnum i {
+.move.b .move-say .note {
   color: var(--color-flag);
 }
-.fcard h3 {
-  margin: 0 0 12px;
-  font-size: 19px;
-  font-weight: 700;
-  letter-spacing: -0.024em;
-  line-height: 1.2;
-  color: var(--color-paper);
+.move.c .move-say .note {
+  color: var(--color-moss);
 }
-.fcard p {
-  margin: 0;
-  font-size: 14.5px;
-  line-height: 1.6;
-  color: var(--color-text-2);
-}
-.fwhy {
-  margin-top: 14px !important;
-  padding-top: 14px;
-  border-top: 1px solid var(--color-line);
-  color: var(--color-paper) !important;
-  font-weight: 500;
-}
-
-/* -------------------------------------------------------------- the asks */
-
-.asklist {
-  list-style: none;
-  margin: 46px 0 0;
-  padding: 0;
-  display: grid;
-  gap: 1px;
-  background: var(--color-line);
-  border: 1px solid var(--color-line);
-  border-radius: 10px;
+.move-fig {
+  padding: 0 22px;
+  height: 236px;
   overflow: hidden;
-  max-width: 880px;
-}
-.asklist li {
   display: flex;
-  gap: 22px;
-  padding: 22px 24px;
-  background: var(--color-ink);
+  align-items: flex-end;
 }
-.asknum {
+.move-fig > * {
+  width: 100%;
+  border-radius: 10px 10px 0 0;
+  border: var(--ring);
+  border-bottom: 0;
+  background: var(--color-ink);
+  overflow: hidden;
+}
+
+/* ---------------------------------------------------------------- figures */
+
+/*
+ * Every chart on the page sits in the same frame: a big radius, a hairline
+ * ring, a soft shadow, and the page's own ground behind it. That is what makes
+ * eight different figures read as one product rather than eight attachments.
+ */
+.frame {
+  border-radius: var(--r-card);
+  border: var(--ring);
+  background: var(--color-ink);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+}
+.frame-in {
+  padding: 22px;
+}
+@media (max-width: 620px) {
+  .frame-in {
+    padding: 14px;
+  }
+}
+
+/* ---------------------------------------------------------------- numbers */
+
+.nums {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(158px, 1fr));
+  gap: 30px 26px;
+  margin-top: 52px;
+}
+.nums b {
+  display: block;
+  font-family: var(--font-display);
+  font-weight: 300;
+  font-size: clamp(2.2rem, 3.6vw, 3.4rem);
+  line-height: 1;
+  letter-spacing: -0.03em;
+  color: var(--color-text);
+  font-variant-numeric: tabular-nums;
+}
+.nums .bad b {
+  color: var(--color-flag);
+}
+.nums .good b {
+  color: var(--color-moss);
+}
+.nums span {
+  display: block;
+  margin-top: 10px;
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: 0.63rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  line-height: 1.5;
+  color: var(--color-text-3);
+}
+.nums li {
+  list-style: none;
+}
+.nums {
+  padding: 0;
+}
+
+/* --------------------------------------------------------------- listings */
+
+.rows {
+  margin: 52px 0 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid var(--color-line);
+}
+.rows li {
+  display: grid;
+  grid-template-columns: 54px minmax(0, 1fr);
+  gap: 20px;
+  padding: 26px 4px;
+  border-bottom: 1px solid var(--color-line);
+}
+.rows i {
+  font-style: normal;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
   letter-spacing: 0.12em;
   color: var(--color-brass);
-  padding-top: 4px;
-  flex: none;
+  padding-top: 6px;
 }
-.asklist b {
-  display: block;
-  font-size: 17px;
-  font-weight: 700;
-  letter-spacing: -0.022em;
-  color: var(--color-paper);
+.rows .why {
+  margin: 12px 0 0;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: var(--color-text);
+  font-weight: 500;
 }
-.asklist i {
-  display: block;
-  margin-top: 5px;
-  font-style: normal;
-  font-size: 14.5px;
-  line-height: 1.55;
-  color: var(--color-text-2);
+@media (min-width: 900px) {
+  .rows li {
+    grid-template-columns: 54px 320px minmax(0, 1fr);
+    align-items: baseline;
+  }
+  .rows .why {
+    margin: 0;
+  }
 }
-.pull {
-  margin: 48px 0 0;
-  max-width: 720px;
-  padding-left: 26px;
-  border-left: 2px solid var(--color-brass);
+
+/* -------------------------------------------------------------------- cta */
+
+.cta {
+  position: relative;
+  margin: 0 24px 24px;
+  padding: 92px 24px;
+  border-radius: 34px;
+  overflow: hidden;
+  text-align: center;
+  color: #fff;
+  background:
+    radial-gradient(
+      120% 140% at 18% 12%,
+      var(--color-signal) 0%,
+      transparent 58%
+    ),
+    radial-gradient(
+      110% 130% at 88% 88%,
+      var(--color-electric) 0%,
+      transparent 62%
+    ),
+    var(--color-signal-deep);
 }
-.pull p {
-  margin: 0;
-  font-family: var(--font-serif);
-  font-style: italic;
-  font-size: clamp(21px, 2.4vw, 30px);
-  line-height: 1.34;
-  color: var(--color-paper);
+.cta .h2,
+.cta .lede {
+  color: #fff;
 }
-.pull cite {
-  display: block;
-  margin-top: 16px;
-  font-family: var(--font-mono);
-  font-size: 9.5px;
-  font-style: normal;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--color-text-3);
+.cta .lede {
+  margin: 18px auto 0;
+  max-width: 46ch;
+  color: rgb(255 255 255 / 0.82);
+}
+.cta .btn {
+  margin-top: 34px;
+  background: #fff;
+  color: var(--color-inkbrand);
+  border-color: transparent;
+}
+.cta .btn:hover {
+  background: var(--color-paper);
 }
 
 /* ----------------------------------------------------------------- footer */
 
-.foot {
-  /* The deck left a bare `footer` rule behind that turns this into a flex row
-     and knocks the gutter out. Reset it rather than inherit a dead layout. */
+.ft {
   display: block;
   margin: 0;
-  gap: 0;
+  padding: 64px 0 80px;
+  border-top: 1px solid var(--color-line);
   font-family: var(--font-sans);
   font-size: 16px;
   letter-spacing: normal;
-  padding: 74px 0 90px;
-  border-top: 1px solid var(--color-line);
+  gap: 0;
 }
-.footmark {
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-  margin: 0 0 16px;
+.ft-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) repeat(auto-fit, minmax(150px, 1fr));
+  gap: 40px;
 }
-.footmark b {
-  font-size: 20px;
-  font-weight: 800;
+.ft-mark b {
+  font-size: 1.2rem;
+  font-weight: 700;
   letter-spacing: -0.035em;
-  color: var(--color-paper);
+  color: var(--color-text);
 }
-.footmark span {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--color-text-3);
-}
-.footnote {
-  margin: 0 0 22px;
-  max-width: 56ch;
-  font-size: 13.5px;
+.ft-mark p {
+  margin: 12px 0 0;
+  max-width: 40ch;
+  font-size: 0.86rem;
   line-height: 1.6;
   color: var(--color-text-3);
 }
-.foottop {
+.ft-col h4 {
+  margin: 0 0 14px;
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 0.62rem;
+  font-weight: 400;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--color-brass);
+  color: var(--color-text-3);
+}
+.ft-col ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 9px;
+}
+.ft-col a,
+.ft-col span {
+  font-size: 0.88rem;
+  color: var(--color-text-2);
   text-decoration: none;
 }
-.foottop:hover {
+.ft-col a:hover {
+  color: var(--color-text);
   text-decoration: underline;
-  text-underline-offset: 4px;
+  text-underline-offset: 3px;
 }
 
-/* Nothing on the page is pinned or animated if the machine asked for still. */
+/* ------------------------------------------------------------------- misc */
+
+.pull {
+  margin: 56px auto 0;
+  max-width: 720px;
+  text-align: center;
+}
+.pull p {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 300;
+  font-style: italic;
+  font-size: clamp(1.3rem, 2.3vw, 2rem);
+  line-height: 1.3;
+  letter-spacing: -0.015em;
+  color: var(--color-text);
+}
+.pull cite {
+  display: block;
+  margin-top: 18px;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  font-style: normal;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-text-3);
+}
+
+.grain {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+  opacity: 0.035;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 180px 180px;
+}
+:root[data-theme="dark"] .grain {
+  mix-blend-mode: overlay;
+  opacity: 0.05;
+}
+
+/* Reduced motion: nothing pins, nothing sweeps. */
 @media (prefers-reduced-motion: reduce) {
-  .drive-pin {
+  .pin {
+    height: auto !important;
+  }
+  .pin-in {
     position: relative;
     height: auto;
   }
-  .drive {
-    height: auto !important;
-  }
+}
+
+
+/* --------------------------------------------------- a figure, shown small */
+
+/*
+ * A chart used as a picture rather than a control. It is scaled down, its
+ * transport and readouts are hidden, and it cannot be clicked: on a card it is
+ * there to show what the thing looks like, and the full-size one is a scroll
+ * away.
+ */
+.mini-fig {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+}
+.mini-fig > * {
+  width: 100%;
+}
+.mini-fig .tl-ctl,
+.mini-fig .tl-key,
+.mini-fig .tl-hud,
+.mini-fig .journey-ctl,
+.mini-fig .journey-hud,
+.mini-fig .pg-ctl,
+.mini-fig .pg-key,
+.mini-fig .ceil-ctl,
+.mini-fig .ceil-hud,
+.mini-fig .hub-hud,
+.mini-fig .hub-ctl,
+.mini-fig .hub-say {
+  display: none;
+}
+.mini-fig .tl-view,
+.mini-fig .journey-view,
+.mini-fig .pgrid-view,
+.mini-fig .ceil-view {
+  overflow: visible;
+  padding: 0;
+}
+/* Only the first few cells of the grid, so it reads as a texture not a table. */
+.mini-fig .pg-cells {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.mini-fig .pg-cell:nth-child(n + 7) {
+  display: none;
+}
+.move-fig .mini-fig {
+  position: relative;
+  inset: auto;
+  padding: 14px 14px 0;
+  align-items: flex-end;
+}
+
+/* ------------------------------------------ figures inside a framed panel */
+
+/*
+ * At full size a figure fills its frame and keeps its readouts, but the frame
+ * is the page's own card, so it has no border or radius of its own.
+ */
+.frame-in .hub,
+.frame-in .tl,
+.frame-in .journey,
+.frame-in .pgrid,
+.frame-in .ceil {
+  margin: 0;
+  height: auto;
+}
+.frame-in .hub-stage {
+  position: relative;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 10;
+  min-height: 280px;
+  max-height: 62svh;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  flex: none;
+}
+.pin-grid .frame .hub {
+  /* Short enough that the top of the ring clears the floating bar. */
+  height: min(62svh, 620px);
+  display: flex;
+  flex-direction: column;
+}
+.pin-grid .frame .hub-stage {
+  flex: 1 1 auto;
+  aspect-ratio: auto;
+  max-height: none;
+  min-height: 0;
+}
+.pin-grid .frame .hub-say,
+.pin-grid .frame .hub-ctl {
+  display: none;
+}
+.pin-grid .frame .hub-hud {
+  flex: none;
+  border-top: 1px solid var(--color-line);
 }
