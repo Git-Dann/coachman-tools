@@ -171,7 +171,7 @@ function DeckInner({ start }: { start: ChapterId }) {
         >
           {/* Desktop puts the interactive thing first and biggest, with the
               words in a narrow rail beside it. Phones stack, words first. */}
-          <div className={`slide-grid${slide.wide ? " wide" : ""}`}>
+          <div className={`slide-grid ${slide.kind}`}>
             <div className="stage">
               <Body />
             </div>

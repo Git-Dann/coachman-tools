@@ -11,6 +11,7 @@ import {
   fitDistance,
   labelSprite,
   ringGeometry,
+  sizeFixedLabel,
 } from "@/lib/scene";
 import {
   DESK_PEOPLE,
@@ -56,6 +57,16 @@ export function HubSim({ mode }: { mode: Mode }) {
   );
   const units = mult * UNITS_PER_STEP;
   const l = useMemo(() => load(jobs, units, DESK_PEOPLE), [jobs, units]);
+  /*
+   * What the same volume would cost the way it is done now. The proposed side
+   * needs this rather than a "turned away" count: nothing gets turned away in
+   * a process whose admin cost per caravan is flat, you just staff it, and the
+   * honest comparison is how many people each way of working needs.
+   */
+  const todayAt = useMemo(
+    () => load(todayJobs(), units, DESK_PEOPLE),
+    [units],
+  );
   const h = mode === "today" ? heat(l.ratio) : 0;
   const v = verdict(l.ratio);
 
@@ -110,9 +121,12 @@ export function HubSim({ mode }: { mode: Mode }) {
     });
 
     /* ---------------------------------------------------- the caravans */
-    const fleet = new THREE.InstancedMesh(vanGeo, vanMat, 12);
+    // Room for a hundred. A caravan manufacturer at six a year would not need
+    // a system at all.
+    const FLEET_MAX = 100;
+    const fleet = new THREE.InstancedMesh(vanGeo, vanMat, FLEET_MAX);
     fleet.instanceColor = new THREE.InstancedBufferAttribute(
-      new Float32Array(12 * 3),
+      new Float32Array(FLEET_MAX * 3),
       3,
     );
     fleet.count = 0;
@@ -133,16 +147,18 @@ export function HubSim({ mode }: { mode: Mode }) {
     let pads: THREE.Mesh[] = [];
     let plates: THREE.Mesh[][] = [];
     let marks: THREE.Mesh[] = [];
+    let labels: THREE.Sprite[] = [];
     let links: THREE.Line[] = [];
     let nodeAt: THREE.Vector3[] = [];
 
     const RADIUS = 9.6;
 
-    const buildRing = (js: Job[]) => {
+    const buildRing = (js: Job[], proposed: boolean) => {
       ring.clear();
       pads = [];
       plates = [];
       marks = [];
+      labels = [];
       links = [];
       nodeAt = [];
 
@@ -187,36 +203,71 @@ export function HubSim({ mode }: { mode: Mode }) {
         }
         plates.push(stack);
 
-        // A thin ring on the floor, not a haze in the air. It marks the job and
-        // carries its colour without smearing light over everything nearby.
-        const mark = new THREE.Mesh(
-          ringGeo,
-          new THREE.MeshBasicMaterial({
-            color: 0x6fae7f,
+        /*
+         * A ring on the floor under each job, carrying the heat. Only in
+         * today's picture: in the proposed one the pad is already a plain green
+         * disc, and a second ring around every one of the twelve was drawing
+         * each stage twice for nothing.
+         */
+        if (!proposed) {
+          const mark = new THREE.Mesh(
+            ringGeo,
+            new THREE.MeshBasicMaterial({
+              color: 0x6fae7f,
+              transparent: true,
+              opacity: 0.5,
+              depthWrite: false,
+              side: THREE.DoubleSide,
+            }),
+          );
+          mark.position.set(pos.x, 0.035, pos.z);
+          ring.add(mark);
+          marks.push(mark);
+        }
+
+        // Held at one size on screen. The ring is seen at an angle, so a name
+        // on the near side was three times the size of one on the far side and
+        // the picture read as noise rather than as twelve equal stages.
+        const label = labelSprite(job.name, "#C6D5DF", false, true);
+        label.position.set(pos.x * 1.18, 1.05, pos.z * 1.18);
+        ring.add(label);
+        labels.push(label);
+
+        /*
+         * Today, every job hangs off the middle, so it gets a spoke. That is
+         * the point of that picture and the reason it looks like a hub.
+         *
+         * Proposed is one process, so it gets one line: an unbroken circle
+         * through the twelve stages, drawn once below. Twelve spokes said the
+         * same thing twelve times and made the simpler process look busier
+         * than the broken one.
+         */
+        if (!proposed) {
+          const link = new THREE.Line(
+            new THREE.BufferGeometry().setFromPoints([
+              new THREE.Vector3(0, 0.35, 0),
+              new THREE.Vector3(pos.x * 0.9, 0.12, pos.z * 0.9),
+            ]),
+            lineMat.clone(),
+          );
+          ring.add(link);
+          links.push(link);
+        }
+      });
+
+      if (proposed) {
+        const loop = new THREE.LineLoop(
+          new THREE.BufferGeometry().setFromPoints(
+            nodeAt.map((p) => new THREE.Vector3(p.x, 0.06, p.z)),
+          ),
+          new THREE.LineBasicMaterial({
+            color: 0x4c7f5c,
             transparent: true,
-            opacity: 0.5,
-            depthWrite: false,
-            side: THREE.DoubleSide,
+            opacity: 0.8,
           }),
         );
-        mark.position.set(pos.x, 0.035, pos.z);
-        ring.add(mark);
-        marks.push(mark);
-
-        const label = labelSprite(job.name, "#DCE6EC");
-        label.position.set(pos.x * 1.2, 0.95, pos.z * 1.2);
-        ring.add(label);
-
-        const link = new THREE.Line(
-          new THREE.BufferGeometry().setFromPoints([
-            new THREE.Vector3(0, 0.35, 0),
-            new THREE.Vector3(pos.x * 0.9, 0.12, pos.z * 0.9),
-          ]),
-          lineMat.clone(),
-        );
-        ring.add(link);
-        links.push(link);
-      });
+        ring.add(loop);
+      }
     };
 
     /* -------------------------------------------------------- the globe */
@@ -277,30 +328,33 @@ export function HubSim({ mode }: { mode: Mode }) {
     composer.addPass(new OutputPass());
 
     /*
-     * How much room the picture needs, measured rather than guessed. The widest
-     * job name hung off the left or right of the ring is what decides it, and
-     * guessing that put "Acknowledgement" half off the screen on a phone.
+     * How much room the picture needs.
      *
-     * Vertically it needs far less: the ring is flat and seen from above, so it
+     * The ring itself is a known radius. The names are drawn at one size on
+     * screen rather than in the world, so they cannot be added to that as a
+     * world measure: instead the ring gets whatever share of the frame is left
+     * once the widest name has taken its cut off each side.
+     *
+     * Vertically it needs far less. The ring is flat and seen from above, so it
      * stands about a third as high on screen as it is wide.
      */
     const REACH_V = 9.5;
-    let reachH = RADIUS + 1.6;
+    const RING_REACH = RADIUS * 1.18 + 1.1;
+    let widestLabel = 4;
     const measureReach = () => {
-      let r = RADIUS + 1.6;
-      // Radial, not just across x: the camera orbits, so every label passes
-      // through the widest point of the frame at some point in the turn.
-      ring.traverse((o) => {
-        if ((o as THREE.Sprite).isSprite) {
-          const radial = Math.hypot(o.position.x, o.position.z);
-          r = Math.max(r, radial + (o as THREE.Sprite).scale.x / 2);
-        }
-      });
-      reachH = r;
+      widestLabel = labels.reduce(
+        (m, l) => Math.max(m, l.userData.ratio as number),
+        3,
+      );
     };
 
     let w = 0;
     let hgt = 0;
+    let labelPx = 13;
+    const ringReach = () => {
+      const share = Math.min(0.42, (labelPx * widestLabel) / Math.max(1, w));
+      return RING_REACH / (1 - share);
+    };
     const resize = () => {
       const r = mount.getBoundingClientRect();
       w = Math.max(1, r.width);
@@ -309,7 +363,11 @@ export function HubSim({ mode }: { mode: Mode }) {
       composer.setSize(w, hgt);
       camera.aspect = w / hgt;
       camera.updateProjectionMatrix();
-      const k = Math.max(1, fitDistance(camera, reachH, REACH_V) / 25.5);
+      // Scaled to the canvas: the same name has to read on a phone and on a
+      // projector, and a fixed pixel size cannot do both.
+      labelPx = Math.max(10.5, Math.min(17, w / 92));
+      for (const l of labels) sizeFixedLabel(l, labelPx, hgt);
+      const k = Math.max(1, fitDistance(camera, ringReach(), REACH_V) / 25.5);
       (scene.fog as THREE.Fog).near = 26 * k;
       (scene.fog as THREE.Fog).far = 90 * k;
     };
@@ -378,7 +436,7 @@ export function HubSim({ mode }: { mode: Mode }) {
       const st = state.current;
 
       if (builtFor !== rebuild.current) {
-        buildRing(st.jobs);
+        buildRing(st.jobs, st.mode === "proposed");
         measureReach();
         // The reach only settles once the labels exist, so the framing and the
         // fog have to be worked out again now they do.
@@ -386,7 +444,7 @@ export function HubSim({ mode }: { mode: Mode }) {
         builtFor = rebuild.current;
       }
 
-      const minDist = fitDistance(camera, reachH, REACH_V);
+      const minDist = fitDistance(camera, ringReach(), REACH_V);
 
       const showGlobe = st.mode === "proposed" && st.globe;
       globeGroup.visible = showGlobe;
@@ -399,18 +457,28 @@ export function HubSim({ mode }: { mode: Mode }) {
       } else {
         camDist += (Math.max(25.5, minDist) - camDist) * 0.05;
 
-        /* the fleet in the middle */
-        const n = Math.min(st.mult, 12);
+        /*
+         * The fleet in the middle. It is laid out as a block that always takes
+         * up the same room, so the caravans shrink as you add them rather than
+         * spilling over the ring. One on its own is the hero of the picture and
+         * gets the size to match.
+         */
+        const n = Math.min(st.mult, FLEET_MAX);
+        const cols = Math.ceil(Math.sqrt(n));
+        const rows = Math.ceil(n / cols);
+        const SPAN = 6.8;
+        const gap = SPAN / Math.max(2, Math.max(cols, rows));
+        const size = n === 1 ? 1.9 : Math.min(1.25, gap * 0.52);
         for (let i = 0; i < n; i++) {
-          const cols = Math.ceil(Math.sqrt(n));
-          const r = Math.floor(i / cols);
           const c = i % cols;
-          const ox = (c - (cols - 1) / 2) * 3.4;
-          const oz = (r - (Math.ceil(n / cols) - 1) / 2) * 2.3;
-          dummy.position.set(ox, 0, oz);
+          const r = Math.floor(i / cols);
+          dummy.position.set(
+            (c - (cols - 1) / 2) * gap,
+            0,
+            (r - (rows - 1) / 2) * gap * 0.8,
+          );
           dummy.rotation.set(0, reduced ? 0 : t * 0.00016, 0);
-          // A lone caravan is the hero of the picture, so it gets more size.
-          dummy.scale.setScalar(n === 1 ? 1.9 : 1.2);
+          dummy.scale.setScalar(size);
           dummy.updateMatrix();
           fleet.setMatrixAt(i, dummy.matrix);
           col.setHex(0xf2f6f8);
@@ -440,15 +508,14 @@ export function HubSim({ mode }: { mode: Mode }) {
           m.emissive.lerp(cool, 0.08);
           m.emissiveIntensity = st.mode === "proposed" ? 0.55 : 0.12;
 
+          // Proposed has no floor rings, so there may be nothing here to tint.
           const stacked = plates[i].length > 0;
-          const gm = marks[i].material as THREE.MeshBasicMaterial;
-          gm.color.lerp(stacked ? tint : cool, 0.08);
-          const markTarget = stacked
-            ? 0.42 + st.heat * 0.45
-            : st.mode === "proposed"
-              ? 0.7
-              : 0.34;
-          gm.opacity += (markTarget - gm.opacity) * 0.08;
+          const mark = marks[i];
+          if (mark) {
+            const gm = mark.material as THREE.MeshBasicMaterial;
+            gm.color.lerp(stacked ? tint : cool, 0.08);
+            gm.opacity += (0.34 + st.heat * 0.5 - gm.opacity) * 0.08;
+          }
 
           for (const plate of plates[i]) {
             const pm = plate.material as THREE.MeshStandardMaterial;
@@ -465,9 +532,14 @@ export function HubSim({ mode }: { mode: Mode }) {
             ((isPicked ? 0.45 : 0) - pads[i].position.y) * 0.16;
           if (isPicked) m.emissiveIntensity = 1.1;
 
-          const lm = links[i].material as THREE.LineBasicMaterial;
-          lm.color.lerp(stacked ? tint : cool, 0.06);
-          lm.opacity = stacked ? 0.28 + st.heat * 0.6 : st.mode === "proposed" ? 0.45 : 0.2;
+          // Proposed has one circle rather than a spoke per stage, so there is
+          // not necessarily a line here to tint.
+          const link = links[i];
+          if (link) {
+            const lm = link.material as THREE.LineBasicMaterial;
+            lm.color.lerp(stacked ? tint : cool, 0.06);
+            lm.opacity = stacked ? 0.28 + st.heat * 0.6 : 0.2;
+          }
         }
       }
 
@@ -523,11 +595,17 @@ export function HubSim({ mode }: { mode: Mode }) {
         label: "of those, entered again",
         tone: l.duplicatedHours > 0 ? "flag" : "moss",
       },
-      {
-        value: fmt(l.throttled),
-        label: "turned away",
-        tone: l.throttled > 0 ? "flag" : "moss",
-      },
+      proposed
+        ? {
+            value: fmt(l.peopleNeeded),
+            label: `people on the desk, not ${fmt(todayAt.peopleNeeded)}`,
+            tone: "moss" as const,
+          }
+        : {
+            value: fmt(l.throttled),
+            label: "turned away",
+            tone: l.throttled > 0 ? ("flag" as const) : ("moss" as const),
+          },
     ],
   });
 
@@ -610,10 +688,20 @@ export function HubSim({ mode }: { mode: Mode }) {
           </b>
           <span>of those, entering it again</span>
         </div>
-        <div className={`hud-cell ${l.throttled > 0 ? "flag" : ""}`}>
-          <b className={l.throttled > 0 ? "bad" : "ok"}>{fmt(l.throttled)}</b>
-          <span>turned away, desk cannot take them</span>
-        </div>
+        {proposed ? (
+          <div className="hud-cell">
+            <b className="ok">{fmt(l.peopleNeeded)}</b>
+            <span>
+              people on the desk, against {fmt(todayAt.peopleNeeded)} the way it
+              is done now
+            </span>
+          </div>
+        ) : (
+          <div className={`hud-cell ${l.throttled > 0 ? "flag" : ""}`}>
+            <b className={l.throttled > 0 ? "bad" : "ok"}>{fmt(l.throttled)}</b>
+            <span>turned away, desk cannot take them</span>
+          </div>
+        )}
       </div>
 
       <p className="hub-say">
@@ -632,27 +720,24 @@ export function HubSim({ mode }: { mode: Mode }) {
       </p>
 
       <div className="hub-ctl">
-        <div className="adder">
-          <button
-            type="button"
-            onClick={() => setMult((m) => Math.max(1, m - 1))}
-            disabled={mult <= 1}
-            aria-label="One fewer year of volume"
-          >
-            &#8722;
-          </button>
+        {/* A slider, because a hundred steps is not something to click through,
+            and the whole argument of the proposed side is that a hundred is
+            not a stupid number to ask for. */}
+        <label className="volume">
           <span>
-            <b>{mult}×</b> today&rsquo;s volume
+            <b>{mult}&times;</b> today&rsquo;s volume
+            <i>{fmt(units)} caravans a year</i>
           </span>
-          <button
-            type="button"
-            onClick={() => setMult((m) => Math.min(6, m + 1))}
-            disabled={mult >= 6}
-            aria-label="Add another year of volume"
-          >
-            &#43;
-          </button>
-        </div>
+          <input
+            type="range"
+            min={1}
+            max={100}
+            step={1}
+            value={mult}
+            onChange={(e) => setMult(Number(e.target.value))}
+            aria-label="Years of volume"
+          />
+        </label>
 
         {proposed ? (
           <button

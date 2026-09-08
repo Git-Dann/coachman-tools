@@ -46,6 +46,15 @@ export interface Slide {
   detailLabel?: string;
   /** Two or three words naming this slide in the rail. Says where you are. */
   marker: string;
+  /**
+   * How the slide is laid out.
+   *
+   * "scene" gives the picture the whole slide, edge to edge, with the figures
+   * and controls as a strip over the bottom of it. "content" is a centred
+   * column of cards or rows. Everything is one of the two, so moving between
+   * slides feels like one tool rather than eleven separately built pages.
+   */
+  kind: "scene" | "content";
   /** Drop the rail and use the whole width. */
   wide?: boolean;
   footnote?: string;
@@ -257,6 +266,7 @@ function FlowMap() {
 export const SLIDES: Slide[] = [
   {
     id: "cover",
+    kind: "scene",
     marker: "The picture",
     chapter: "operations",
     title: "One caravan. Nowhere to look it up.",
@@ -304,6 +314,7 @@ export const SLIDES: Slide[] = [
   },
   {
     id: "throttle",
+    kind: "scene",
     marker: "The throttle",
     chapter: "operations",
     title: "Sixteen jobs. Twenty done twice.",
@@ -360,6 +371,7 @@ export const SLIDES: Slide[] = [
   },
   {
     id: "scales",
+    kind: "scene",
     marker: "Built properly",
     chapter: "operations",
     title: "The same order, built properly.",
@@ -394,6 +406,7 @@ export const SLIDES: Slide[] = [
   },
   {
     id: "sim",
+    kind: "scene",
     marker: "Run the season",
     chapter: "operations",
     title: "Run the season.",
@@ -425,6 +438,7 @@ export const SLIDES: Slide[] = [
   },
   {
     id: "van",
+    kind: "content",
     marker: "Follow one",
     chapter: "operations",
     title: "Follow one caravan.",
@@ -434,6 +448,7 @@ export const SLIDES: Slide[] = [
   },
   {
     id: "people",
+    kind: "scene",
     marker: "Who holds it",
     chapter: "leadership",
     title: `One desk holds ${word(HEAVIEST.steps.length)} of ${word(TOTAL_STEPS)}.`,
@@ -480,6 +495,7 @@ export const SLIDES: Slide[] = [
   },
   {
     id: "capacity",
+    kind: "content",
     marker: "The ceiling",
     chapter: "leadership",
     title: "Add caravans. Find the ceiling.",
@@ -505,6 +521,7 @@ export const SLIDES: Slide[] = [
   },
   {
     id: "hours",
+    kind: "content",
     marker: "What it costs",
     chapter: "leadership",
     title: "What the manual work costs.",
@@ -514,6 +531,7 @@ export const SLIDES: Slide[] = [
   },
   {
     id: "faults",
+    kind: "content",
     marker: "What is broken",
     chapter: "leadership",
     title: "Four things are broken.",
@@ -538,6 +556,7 @@ export const SLIDES: Slide[] = [
   },
   {
     id: "decisions",
+    kind: "content",
     marker: "Three decisions",
     chapter: "technical",
     title: "Three decisions carry the weight.",
@@ -572,6 +591,7 @@ export const SLIDES: Slide[] = [
   },
   {
     id: "ask",
+    kind: "content",
     marker: "The ask",
     chapter: "technical",
     title: "What we need from you.",

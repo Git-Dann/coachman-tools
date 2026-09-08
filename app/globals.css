@@ -369,6 +369,9 @@ body {
 .cards.two {
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
 }
+.cards {
+  align-items: start;
+}
 .card {
   background: var(--color-surface);
   border: 1px solid var(--color-line);
@@ -1133,15 +1136,28 @@ body {
  * thing takes the space and the words sit in a narrow rail beside it. Phones
  * stack, words first, and everything scrolls.
  */
+/*
+ * One shape for every slide, so moving between them feels like one tool and
+ * not eleven pages.
+ *
+ * The thing you drive on the left, the words on the right, both starting on the
+ * same line, and the pair of them centred in whatever room the screen gives.
+ * Before this the stage was stretched to full height while the words centred
+ * separately, so nothing lined up and the bottom half of most slides was empty.
+ */
 .slide-grid {
-  height: 100%;
+  min-height: 100%;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 330px;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  align-content: safe center;
   gap: 34px;
   padding: 24px 30px 20px;
-  max-width: 1600px;
+  max-width: 1420px;
   margin: 0 auto;
   animation: rise 0.34s cubic-bezier(0.22, 0.7, 0.25, 1);
+}
+.slide-grid > * {
+  align-self: start;
 }
 .slide.back .slide-grid {
   animation-name: riseBack;
@@ -1168,42 +1184,29 @@ body {
   }
 }
 
+/*
+ * The stage sizes to what is on it. Nothing here stretches to fill the column:
+ * a scene has a fixed shape, a list is as long as its items, and a card is as
+ * tall as its words. That is what stops four fault cards from being four tall
+ * empty boxes with a paragraph at the top of each.
+ */
 .stage {
   min-width: 0;
-  min-height: 0;
   display: flex;
   flex-direction: column;
-  /* Centre it when it fits, and start at the top when it does not.
-     Plain `center` (and auto margins) push overflow past the start edge where
-     it can never be scrolled back to. `safe` is the keyword that fixes it, and
-     where it is unsupported the declaration is dropped and content starts at
-     the top, which is the behaviour we want anyway. */
-  justify-content: stretch;
-  overflow-y: auto;
-  overscroll-behavior: contain;
+  gap: 14px;
 }
 .stage > * {
   min-height: 0;
 }
-/* Only components built to occupy the stage take the space. Everything else
-   sits at the top, where it belongs, rather than being stretched apart. */
-.stage > .cover,
-.stage > .hub,
-.stage > .ssim,
-.stage > .fill {
-  flex: 1 1 auto;
-}
 
+/* Starts on the same line as the stage. It used to centre itself against a
+   full-height column, which is why the headline floated halfway down the page
+   while the thing it was describing sat at the top. */
 .aside {
   min-width: 0;
-  min-height: 0;
-  overflow-y: auto;
-  overscroll-behavior: contain;
   display: flex;
   flex-direction: column;
-  justify-content: safe center;
-  align-self: stretch;
-  max-height: 100%;
 }
 
 .slide-kicker {
@@ -2120,14 +2123,18 @@ body {
 .model-block {
   display: grid;
   gap: 18px;
-  /* Same trap as the stage: plain `center` pushes overflow above the top edge
-     where it cannot be scrolled back to. */
-  align-content: safe center;
+  align-content: start;
 }
+/*
+ * Models used to split into their own two columns inside the stage, which with
+ * the words already in a column of their own made three columns of unrelated
+ * things across the screen. They are one column now: the picture, then what it
+ * says, then the controls, the same way round as every scene.
+ */
 @media (min-width: 1000px) {
   .model-split {
-    grid-template-columns: minmax(0, 1.15fr) minmax(260px, 0.85fr);
-    gap: 28px;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
     align-items: start;
   }
   .model-split > .ms-main {
@@ -2706,11 +2713,16 @@ ul.pl.big li::before {
 
 /* ------------------------------------------- panels that fill the stage */
 
+/*
+ * Card grids. These used to stretch to fill the column, which on a tall window
+ * gave four cards fourteen hundred pixels high with a paragraph at the top of
+ * each and nothing else. A card is as tall as its words.
+ */
 .fill {
   display: grid;
   gap: 12px;
-  min-height: 0;
-  align-content: stretch;
+  align-content: start;
+  align-items: start;
 }
 .fill.two {
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -2960,5 +2972,214 @@ ul.pl.big li::before {
   }
   .dbtn.contents {
     margin: 0 auto;
+  }
+}
+
+
+/* =============================================== scenes: one fixed shape */
+
+/*
+ * Every picture on the deck is the same shape and the same size, and it does
+ * not grow or shrink with whatever happens to be underneath it. It used to
+ * flex to fill the column, so the same scene was a different size on every
+ * slide and appeared to inflate as the page settled.
+ *
+ * Sixteen by nine, capped against the window height so a short laptop screen
+ * still leaves room for the readout below it.
+ */
+.cover-scene,
+.hub-stage,
+.ssim-stage,
+.map .map-canvas {
+  flex: none;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  max-height: 52svh;
+  min-height: 300px;
+}
+.cover,
+.hub,
+.ssim {
+  height: auto;
+  min-height: 0;
+}
+
+@media (max-width: 999px) {
+  .cover-scene,
+  .hub-stage,
+  .ssim-stage,
+  .map .map-canvas {
+    aspect-ratio: 5 / 4;
+    max-height: 46svh;
+    min-height: 260px;
+  }
+}
+
+
+/* ------------------------------------------------ volume, one to a hundred */
+
+.volume {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  min-width: 250px;
+  flex: 1 1 260px;
+  max-width: 380px;
+}
+.volume > span {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--color-text-3);
+}
+.volume b {
+  font-family: var(--font-sans);
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  text-transform: none;
+  color: var(--color-brass);
+  font-variant-numeric: tabular-nums;
+}
+.volume i {
+  margin-left: auto;
+  font-style: normal;
+  color: var(--color-text-2);
+  font-variant-numeric: tabular-nums;
+}
+.volume input[type="range"] {
+  width: 100%;
+}
+
+
+/* ══════════════════════════════════════════════════ the two slide layouts */
+
+/*
+ * Everything on the deck is one of two shapes.
+ *
+ * A SCENE gives the picture the whole slide, edge to edge, with no border and
+ * no box around it, the figures and controls as one strip along its bottom, and
+ * the words in a rail down the side. Before this every scene was a bordered
+ * black box sitting inside a bordered container, with its numbers repeated in
+ * the rail beside it and a third of the slide left empty underneath.
+ *
+ * CONTENT is a centred column of cards or rows, sized to its contents.
+ */
+
+/* ------------------------------------------------------------------ scene */
+
+@media (min-width: 1000px) {
+  .slide-grid.scene {
+    grid-template-columns: minmax(0, 1fr) 372px;
+    align-content: stretch;
+    gap: 0;
+    padding: 0;
+    max-width: none;
+    height: 100%;
+    min-height: 0;
+  }
+  .slide-grid.scene > * {
+    align-self: stretch;
+    min-height: 0;
+  }
+  .slide-grid.scene .stage {
+    position: relative;
+    display: block;
+    overflow: hidden;
+    gap: 0;
+  }
+  .slide-grid.scene .aside {
+    padding: 30px 30px 30px 28px;
+    border-left: 1px solid var(--color-line);
+    justify-content: safe center;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  /* The picture is the slide. */
+  .slide-grid.scene .cover,
+  .slide-grid.scene .hub,
+  .slide-grid.scene .ssim,
+  .slide-grid.scene .map {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    gap: 0;
+    margin: 0;
+  }
+  .slide-grid.scene .cover-scene,
+  .slide-grid.scene .hub-stage,
+  .slide-grid.scene .ssim-stage,
+  .slide-grid.scene .map-canvas {
+    position: relative;
+    flex: 1 1 auto;
+    width: auto;
+    height: auto;
+    min-height: 0;
+    max-height: none;
+    aspect-ratio: auto;
+    border: 0;
+    border-radius: 0;
+  }
+
+  /*
+   * Everything that is not the picture is a strip under it, in flow rather
+   * than floating over it. Floating looked better until the bottom of the ring
+   * disappeared behind it: the camera cannot see a scrim, so it framed the
+   * scene for room it did not have.
+   */
+  .slide-grid.scene .bignums,
+  .slide-grid.scene .hub-hud,
+  .slide-grid.scene .ssim-hud,
+  .slide-grid.scene .map-read,
+  .slide-grid.scene .map-legend,
+  .slide-grid.scene .hub-ctl,
+  .slide-grid.scene .sim-ctl,
+  .slide-grid.scene .people-ctl {
+    position: relative;
+    z-index: 2;
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+    background: var(--color-ink);
+    flex: none;
+  }
+  .slide-grid.scene .bignums,
+  .slide-grid.scene .hub-hud,
+  .slide-grid.scene .ssim-hud,
+  .slide-grid.scene .map-read {
+    border-top: 1px solid var(--color-line);
+  }
+  .slide-grid.scene .hub-ctl,
+  .slide-grid.scene .sim-ctl,
+  .slide-grid.scene .people-ctl,
+  .slide-grid.scene .map-legend {
+    padding: 12px 20px;
+  }
+
+  /* The rail already says the verdict. Saying it twice, once in each column,
+     was most of what made the slides feel padded out. */
+  .slide-grid.scene .hub-say,
+  .slide-grid.scene .ssim-say,
+  .slide-grid.scene .map-note,
+  .slide-grid.scene .map-list,
+  .slide-grid.scene .status-figs {
+    display: none;
+  }
+
+  /* --------------------------------------------------------------- content */
+
+  .slide-grid.content {
+    grid-template-columns: minmax(0, 1fr) 372px;
+    gap: 40px;
+    padding: 30px 34px 24px;
+    max-width: 1520px;
+    align-content: safe center;
   }
 }
