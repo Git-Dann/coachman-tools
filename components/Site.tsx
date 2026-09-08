@@ -473,11 +473,13 @@ function Build() {
         </div>
       </Reveal>
       <Reveal delay={0.24}>
-        <p className="note" style={{ marginTop: 20, maxWidth: "62ch" }}>
-          The same order with nothing entered twice: twelve stages, one circle,
-          no stacks. Add as much volume as you like and the work per caravan
-          stops growing, so the desk stops being the ceiling. Zoom out and the
-          same twelve stages run anywhere.
+        <p className="note" style={{ marginTop: 20, maxWidth: "66ch" }}>
+          The same order, done once. Twelve stages instead of sixteen steps, one
+          record going round one loop, and a single sheet at each stage rather
+          than a pile. Drag the volume as far as it goes: the loop runs at the
+          same pace, the sheet stays one, and the re-entry stays at nothing,
+          which is the whole of the difference. Everything that grows is the
+          work itself. Zoom out and the same twelve stages run anywhere.
         </p>
       </Reveal>
     </section>

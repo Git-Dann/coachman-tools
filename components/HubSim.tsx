@@ -181,6 +181,9 @@ export function HubSim({ mode, drive }: { mode: Mode; drive?: number }) {
 
     let pads: THREE.Mesh[] = [];
     let plates: THREE.Mesh[][] = [];
+    /* The record running the proposed loop, and the corners it runs between. */
+    let pulse: THREE.Mesh | null = null;
+    let pulseOn: THREE.Vector3[] = [];
     let marks: THREE.Mesh[] = [];
     let labels: THREE.Sprite[] = [];
     let links: THREE.Line[] = [];
@@ -196,6 +199,8 @@ export function HubSim({ mode, drive }: { mode: Mode; drive?: number }) {
       pads = [];
       plates = [];
       pileOf.length = 0;
+      pulse = null;
+      pulseOn = [];
       marks = [];
       labels = [];
       links = [];
@@ -233,6 +238,28 @@ export function HubSim({ mode, drive }: { mode: Mode; drive?: number }) {
          * single column is a tower, and a tower reads as a bar chart; a pile
          * reads as paper somebody has to get through.
          */
+        /*
+         * The proposed side gets exactly one sheet per stage, and it stays one
+         * however much volume you add. On today's side the pile grows and you
+         * can watch it; without a sheet of its own the proposed side showed
+         * nothing at all, and nothing reads as unfinished rather than as
+         * nothing to enter twice. One sheet is what "entered once" looks like.
+         */
+        if (proposed) {
+          const one = new THREE.Mesh(
+            plateGeo,
+            new THREE.MeshStandardMaterial({
+              color: PALETTE.moss,
+              emissive: PALETTE.moss,
+              emissiveIntensity: 0.35,
+              roughness: 0.6,
+            }),
+          );
+          one.position.set(pos.x, 0.22, pos.z);
+          one.scale.setScalar(0.86);
+          ring.add(one);
+        }
+
         const stack: THREE.Mesh[] = [];
         const per = Math.max(1, job.duplication);
         for (let d = 0; d < job.duplication * PILE_PASSES; d++) {
@@ -324,6 +351,27 @@ export function HubSim({ mode, drive }: { mode: Mode; drive?: number }) {
           }),
         );
         ring.add(loop);
+
+        /*
+         * Something moving around the circle, at one steady pace.
+         *
+         * A still green ring is the whole argument of this side and it looked
+         * like a picture of nothing happening. One record running the loop, at
+         * the same speed whatever the volume, is what a process with no
+         * re-entry in it actually looks like: it does not slow down, and it
+         * does not stop anywhere to be typed in again.
+         */
+        pulse = new THREE.Mesh(
+          new THREE.SphereGeometry(0.52, 20, 16),
+          new THREE.MeshStandardMaterial({
+            color: PALETTE.moss,
+            emissive: PALETTE.moss,
+            emissiveIntensity: 1.1,
+            roughness: 0.4,
+          }),
+        );
+        ring.add(pulse);
+        pulseOn = nodeAt.map((p) => new THREE.Vector3(p.x, 0.34, p.z));
       }
     };
 
@@ -564,6 +612,10 @@ export function HubSim({ mode, drive }: { mode: Mode; drive?: number }) {
     const ro = new ResizeObserver(resize);
     ro.observe(mount);
 
+    /* How far round the loop the proposed record has got, 0 to 1. */
+
+    let flow = 0;
+
     let yaw = 0.5;
     let pitch = 0.5;
     let drag: { x: number; y: number } | null = null;
@@ -751,6 +803,23 @@ export function HubSim({ mode, drive }: { mode: Mode; drive?: number }) {
         }
       }
 
+      /*
+       * Move the record along. Constant speed: the point is that it is the same
+       * at two thousand caravans and at two hundred thousand.
+       */
+      if (pulse && pulseOn.length > 1) {
+        if (reduced) {
+          pulse.position.copy(pulseOn[0]);
+        } else {
+          flow = (flow + 0.0022) % 1;
+          const at = flow * pulseOn.length;
+          const i = Math.floor(at);
+          const a = pulseOn[i % pulseOn.length];
+          const bb = pulseOn[(i + 1) % pulseOn.length];
+          pulse.position.lerpVectors(a, bb, at - i);
+        }
+      }
+
       if (!touched && !reduced) yaw += 0.0011;
       camera.position.set(
         Math.sin(yaw) * Math.cos(pitch) * camDist,
@@ -899,7 +968,11 @@ export function HubSim({ mode, drive }: { mode: Mode; drive?: number }) {
           <b className={l.duplicatedHours > 0 ? "bad" : "ok"}>
             {fmt(Math.round(l.duplicatedHours))}
           </b>
-          <span>of those, entering it again</span>
+          <span>
+            {proposed
+              ? `entering it again, at any volume, against ${fmt(Math.round(todayAt.duplicatedHours))} today`
+              : "of those, entering it again"}
+          </span>
         </div>
         {proposed ? (
           <div className="hud-cell">
@@ -908,6 +981,12 @@ export function HubSim({ mode, drive }: { mode: Mode; drive?: number }) {
               people on the desk, against {fmt(todayAt.peopleNeeded)} the way it
               is done now
             </span>
+          </div>
+        ) : null}
+        {proposed ? (
+          <div className="hud-cell">
+            <b className="ok">{jobs.length}</b>
+            <span>stages, against {todayJobs().length} steps today</span>
           </div>
         ) : (
           /*
@@ -940,7 +1019,7 @@ export function HubSim({ mode, drive }: { mode: Mode; drive?: number }) {
           {proposed ? "Nothing is entered twice." : `${v.label}.`}
         </b>{" "}
         {proposed
-          ? "Twelve stages, no re-entry, so the work per caravan stops growing and the desk stops being the ceiling."
+          ? "One record round one loop, one sheet at each stage, and it stays one at any volume. The cost per caravan is flat, so the desk stops being the ceiling."
           : v.said}
       </p>
 
