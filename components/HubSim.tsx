@@ -857,24 +857,32 @@ export function HubSim({ mode }: { mode: Mode }) {
       </p>
 
       <div className="hub-ctl">
-        {/* A slider, because a hundred steps is not something to click through,
-            and the whole argument of the proposed side is that a hundred is
-            not a stupid number to ask for. */}
-        <label className="volume">
-          <span>
-            <b>{mult}&times;</b> today&rsquo;s volume
-            <i>{fmt(units)} caravans a year</i>
-          </span>
-          <input
-            type="range"
-            min={1}
-            max={100}
-            step={1}
-            value={mult}
-            onChange={(e) => setMult(Number(e.target.value))}
-            aria-label="Years of volume"
-          />
-        </label>
+        {/*
+          * A slider, because a hundred steps is not something to click through,
+          * and the whole argument of the proposed side is that a hundred is not
+          * a stupid number to ask for.
+          *
+          * It goes away on the globe. There is no ring to warm up out there, so
+          * the only thing it would move is a number in the strip below, and a
+          * control that does nothing you can see is worse than no control.
+          */}
+        {globe ? null : (
+          <label className="volume">
+            <span>
+              <b>{mult}&times;</b> today&rsquo;s volume
+              <i>{fmt(units)} caravans a year</i>
+            </span>
+            <input
+              type="range"
+              min={1}
+              max={100}
+              step={1}
+              value={mult}
+              onChange={(e) => setMult(Number(e.target.value))}
+              aria-label="Years of volume"
+            />
+          </label>
+        )}
 
         {proposed ? (
           <button

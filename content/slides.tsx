@@ -5,7 +5,7 @@ import { NodeMap3D } from "@/components/NodeMap3D";
 import { CeilingChart } from "@/components/CeilingChart";
 import { PeopleGrid } from "@/components/PeopleGrid";
 import { HoursModel } from "@/components/HoursModel";
-import { SeasonSim } from "@/components/SeasonSim";
+import { SeasonTimeline } from "@/components/SeasonTimeline";
 import { HubSim } from "@/components/HubSim";
 import { VanJourney } from "@/components/VanJourney";
 import { CoverScene } from "@/components/CoverScene";
@@ -337,12 +337,13 @@ export const SLIDES: Slide[] = [
     marker: "Run the season",
     chapter: "operations",
     title: "Run the season.",
-    line: "Press play. Watch how much of it is just waiting.",
-    body: () => <SeasonSim />,
+    line: "Every row is a caravan. Red is time it spent waiting.",
+    body: () => <SeasonTimeline />,
     aside: () => (
       <p className="hint">
-        Red columns are time swallowed at that station. Switch to Proposed and
-        run the same orders again.
+        The percentage is not a claim: it is the red, and you can count it.
+        Where the red lines up into a band, that is the jam. Switch to Proposed
+        and run the same twenty-two caravans.
       </p>
     ),
     detailLabel: "How this is worked out",
