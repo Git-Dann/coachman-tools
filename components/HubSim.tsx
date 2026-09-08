@@ -271,53 +271,181 @@ export function HubSim({ mode }: { mode: Mode }) {
     };
 
     /* -------------------------------------------------------- the globe */
+    /*
+     * Not an attempt at the Earth. A photographic globe needs coastline data
+     * this app has no business shipping, and a hand-drawn one would be wrong in
+     * a way everybody can see. So it is deliberately a diagram: a dark sphere
+     * with a lit limb, clean latitude and longitude circles, a pin standing at
+     * each site, and an arc from Hull to every one of them. The point it makes
+     * is that the same twelve stages run in all of those places.
+     */
     const globeGroup = new THREE.Group();
     globeGroup.visible = false;
     scene.add(globeGroup);
-    const globeGeo = new THREE.SphereGeometry(7, 40, 28);
+
+    const R = 7;
+    const globeGeo = new THREE.SphereGeometry(R, 64, 44);
     globeGroup.add(
       new THREE.Mesh(
         globeGeo,
+        // Fully matt. Any shine at all put what looked like a lens flare on the
+        // top left of the sphere.
         new THREE.MeshStandardMaterial({
-          color: 0x121b24,
-          roughness: 0.9,
+          color: 0x0d1620,
+          roughness: 1,
           metalness: 0,
         }),
       ),
     );
-    globeGroup.add(
-      new THREE.LineSegments(
-        new THREE.WireframeGeometry(new THREE.SphereGeometry(7.02, 26, 18)),
-        new THREE.LineBasicMaterial({
-          color: 0x24384a,
-          transparent: true,
-          opacity: 0.55,
-        }),
-      ),
+
+    /*
+     * The lit limb. A thin bright edge where the sphere turns away, which is
+     * what gives a dark ball on a dark background an outline to read. Tight to
+     * the edge on purpose: the exponent is what keeps it a rim rather than the
+     * soft haze that used to sit over everything.
+     */
+    const rimGeo = new THREE.SphereGeometry(R * 1.035, 48, 32);
+    const limb = new THREE.Mesh(
+      rimGeo,
+      new THREE.ShaderMaterial({
+        transparent: true,
+        depthWrite: false,
+        side: THREE.BackSide,
+        uniforms: { tint: { value: new THREE.Color(0x5f8ba6) } },
+        vertexShader: `
+          varying vec3 vN;
+          varying vec3 vP;
+          void main() {
+            vN = normalize(normalMatrix * normal);
+            vec4 mv = modelViewMatrix * vec4(position, 1.0);
+            vP = normalize(mv.xyz);
+            gl_Position = projectionMatrix * mv;
+          }
+        `,
+        fragmentShader: `
+          uniform vec3 tint;
+          varying vec3 vN;
+          varying vec3 vP;
+          void main() {
+            float f = pow(1.0 - abs(dot(vN, -vP)), 3.2);
+            gl_FragColor = vec4(tint, f * 0.9);
+          }
+        `,
+      }),
     );
-    const markerGeo = new THREE.SphereGeometry(0.2, 12, 10);
-    const markerMat = new THREE.MeshStandardMaterial({
-      color: PALETTE.moss,
-      emissive: PALETTE.moss,
-      emissiveIntensity: 1.5,
+    globeGroup.add(limb);
+
+    /** A point on the sphere, from degrees. */
+    const onGlobe = (lat: number, lon: number, r = R) => {
+      const phi = (90 - lat) * (Math.PI / 180);
+      const theta = (lon + 180) * (Math.PI / 180);
+      return new THREE.Vector3(
+        -r * Math.sin(phi) * Math.cos(theta),
+        r * Math.cos(phi),
+        r * Math.sin(phi) * Math.sin(theta),
+      );
+    };
+
+    // Latitude and longitude as proper circles rather than a wireframe mesh.
+    const gridMat = new THREE.LineBasicMaterial({
+      color: 0x2c4356,
+      transparent: true,
+      opacity: 0.5,
     });
-    // Scattered sites, all running the same process, all green.
+    const gridGeos: THREE.BufferGeometry[] = [];
+    for (let k = -4; k <= 4; k++) {
+      const lat = k * 18;
+      const pts: THREE.Vector3[] = [];
+      for (let d = 0; d <= 96; d++) pts.push(onGlobe(lat, (d / 96) * 360 - 180, R * 1.002));
+      const g = new THREE.BufferGeometry().setFromPoints(pts);
+      gridGeos.push(g);
+      globeGroup.add(new THREE.LineLoop(g, gridMat));
+    }
+    for (let k = 0; k < 12; k++) {
+      const lon = (k / 12) * 360 - 180;
+      const pts: THREE.Vector3[] = [];
+      for (let d = 0; d <= 64; d++) pts.push(onGlobe(-90 + (d / 64) * 180, lon, R * 1.002));
+      const g = new THREE.BufferGeometry().setFromPoints(pts);
+      gridGeos.push(g);
+      globeGroup.add(new THREE.Line(g, gridMat));
+    }
+
+    /*
+     * Hull first, then somewhere else on every populated continent. They stand
+     * for "anywhere", not for a sales pipeline: the slide's claim is about the
+     * process being portable, not about named prospects.
+     */
     const sites: [number, number][] = [
       [53.7, -0.3], [52.5, 13.4], [45.5, 9.2], [48.9, 2.3], [40.4, -3.7],
       [59.3, 18.1], [-33.9, 151.2], [-36.8, 174.8], [43.7, -79.4], [39.7, -105],
       [30.3, -97.7], [-23.5, -46.6], [35.7, 139.7], [1.35, 103.8], [50.1, 8.7],
     ];
-    for (const [lat, lon] of sites) {
-      const phi = (90 - lat) * (Math.PI / 180);
-      const theta = (lon + 180) * (Math.PI / 180);
-      const m = new THREE.Mesh(markerGeo, markerMat);
-      m.position.set(
-        -7.1 * Math.sin(phi) * Math.cos(theta),
-        7.1 * Math.cos(phi),
-        7.1 * Math.sin(phi) * Math.sin(theta),
-      );
-      globeGroup.add(m);
-    }
+
+    const padGlobeGeo = new THREE.CircleGeometry(0.22, 20);
+    const stalkGeo = new THREE.CylinderGeometry(0.035, 0.035, 0.75, 6);
+    const headGeo = new THREE.SphereGeometry(0.13, 12, 10);
+    const siteMat = new THREE.MeshBasicMaterial({
+      color: PALETTE.moss,
+      transparent: true,
+      opacity: 0.55,
+      side: THREE.DoubleSide,
+    });
+    const pinMat = new THREE.MeshStandardMaterial({
+      color: PALETTE.moss,
+      emissive: PALETTE.moss,
+      emissiveIntensity: 1.1,
+      roughness: 0.4,
+    });
+    const arcMat = new THREE.LineBasicMaterial({
+      color: 0x6fae7f,
+      transparent: true,
+      opacity: 0.6,
+    });
+    const arcGeos: THREE.BufferGeometry[] = [];
+
+    const hull = onGlobe(sites[0][0], sites[0][1]);
+    sites.forEach(([lat, lon], n) => {
+      const at = onGlobe(lat, lon, R * 1.004);
+      const up = at.clone().normalize();
+
+      // A disc lying on the surface, so the site reads as a place and not a
+      // bead floating above one.
+      const disc = new THREE.Mesh(padGlobeGeo, siteMat);
+      disc.position.copy(at);
+      disc.lookAt(up.clone().multiplyScalar(R * 3));
+      globeGroup.add(disc);
+
+      const stalk = new THREE.Mesh(stalkGeo, pinMat);
+      stalk.position.copy(up.clone().multiplyScalar(R + 0.38));
+      stalk.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), up);
+      globeGroup.add(stalk);
+
+      const head = new THREE.Mesh(headGeo, pinMat);
+      head.position.copy(up.clone().multiplyScalar(R + 0.78));
+      globeGroup.add(head);
+
+      // An arc from Hull to each of the others, bowed off the surface.
+      if (n > 0) {
+        const mid = hull
+          .clone()
+          .add(at)
+          .normalize()
+          .multiplyScalar(R + hull.distanceTo(at) * 0.34);
+        const curve = new THREE.QuadraticBezierCurve3(
+          hull.clone().multiplyScalar(1.02),
+          mid,
+          at.clone().multiplyScalar(1.02),
+        );
+        const g = new THREE.BufferGeometry().setFromPoints(curve.getPoints(40));
+        arcGeos.push(g);
+        globeGroup.add(new THREE.Line(g, arcMat));
+      }
+    });
+
+    const hullLabel = labelSprite("Hull", "#DCE6EC", true);
+    hullLabel.scale.multiplyScalar(1.5);
+    hullLabel.position.copy(hull.clone().normalize().multiplyScalar(R + 1.7));
+    globeGroup.add(hullLabel)
 
     /* ------------------------------------------------------------ post */
     // RenderPass straight into OutputPass. The bloom pass that used to sit
@@ -453,7 +581,11 @@ export function HubSim({ mode }: { mode: Mode }) {
 
       if (showGlobe) {
         globeGroup.rotation.y += reduced ? 0 : 0.0016;
-        camDist += (Math.max(22, minDist * 0.88) - camDist) * 0.05;
+        // The sphere is 7, the pins stand off it, and the arcs bow further
+        // still, so the globe is framed on its own reach rather than the
+        // ring's.
+        const globeDist = fitDistance(camera, 11.8, 9.6);
+        camDist += (globeDist - camDist) * 0.05;
       } else {
         camDist += (Math.max(25.5, minDist) - camDist) * 0.05;
 
@@ -569,7 +701,12 @@ export function HubSim({ mode }: { mode: Mode }) {
       padGeo.dispose();
       plateGeo.dispose();
       globeGeo.dispose();
-      markerGeo.dispose();
+      rimGeo.dispose();
+      padGlobeGeo.dispose();
+      stalkGeo.dispose();
+      headGeo.dispose();
+      for (const g of gridGeos) g.dispose();
+      for (const g of arcGeos) g.dispose();
       ringGeo.dispose();
       mount.removeChild(renderer.domElement);
     };

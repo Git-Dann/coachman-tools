@@ -1030,76 +1030,81 @@ body {
 
 /* ------------------------------------------------------------------ rail */
 
+/*
+ * One navigation at every size.
+ *
+ * It used to name all three chapters across the whole window on a desktop and
+ * do something else entirely on a phone: three headings floating over eleven
+ * ticks stretched across two thousand pixels, and two navigations to keep in
+ * step with each other. Now there is one, capped and centred, so it stays a
+ * component rather than growing with the window.
+ */
 .rail {
   position: relative;
   z-index: 6;
   background: var(--color-ink);
   border-bottom: 1px solid var(--color-line);
   flex: none;
-  padding: 8px 12px 6px;
+  padding: 9px 20px 8px;
 }
+.rail-in {
+  max-width: 880px;
+  margin: 0 auto;
+}
+.rail-where {
+  display: flex;
+  align-items: baseline;
+  gap: 11px;
+  margin: 0 0 8px;
+  min-width: 0;
+}
+.rail-where span {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--color-brass);
+  flex: none;
+}
+.rail-where em {
+  font-style: normal;
+  font-size: 14.5px;
+  font-weight: 600;
+  letter-spacing: -0.016em;
+  color: var(--color-text);
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rail-where i {
+  font-style: normal;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--color-text-3);
+  font-variant-numeric: tabular-nums;
+  flex: none;
+}
+/* One bar, evenly divided, with a gap only where a chapter changes. */
 .rail-chs {
   display: flex;
-  gap: 2px;
-}
-/* The one-line version. Desktop names all three chapters instead. */
-.rail-where {
-  display: none;
+  gap: 11px;
 }
 .rail-ch {
   flex-shrink: 1;
   flex-basis: 0;
   min-width: 0;
 }
-.rail-name {
-  display: block;
-  width: 100%;
-  background: none;
-  border: 0;
-  padding: 0 0 6px;
-  text-align: left;
-  cursor: pointer;
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--color-text-3);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.rail-ch.on .rail-name {
-  color: var(--color-brass);
-}
-/* Where you are, named, the way a depth marker names a depth. */
-.rail-name em {
-  font-style: normal;
-  color: var(--color-text);
-  font-family: var(--font-sans);
-  font-size: 12.5px;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-  text-transform: none;
-  margin-left: 9px;
-}
-.rail-name em i {
-  font-style: normal;
-  color: var(--color-text-3);
-  font-family: var(--font-mono);
-  font-size: 9.5px;
-  letter-spacing: 0.06em;
-  margin-left: 7px;
-  font-variant-numeric: tabular-nums;
-}
 .rail-ticks {
   display: flex;
-  gap: 2px;
+  gap: 3px;
 }
 .tickm {
   flex: 1 1 0;
-  height: 22px;
-  padding: 9px 0 0;
   min-width: 0;
+  height: 22px;
+  padding: 8px 0 0;
   border: 0;
   background: none;
   cursor: pointer;
@@ -1111,6 +1116,10 @@ body {
   height: 4px;
   border-radius: 2px;
   background: var(--color-surface-3);
+  transition: background 0.2s;
+}
+.tickm:hover::after {
+  background: var(--color-line-2);
 }
 .tickm.done::after {
   background: var(--brass-dim);
@@ -2289,64 +2298,9 @@ ul.pl.big li::before {
   .mast-by {
     display: none;
   }
-  /*
-   * The phone rail. Three chapter names, three tick groups and a stacked
-   * marker was three rows of chrome on a 375px screen, with ticks too narrow
-   * to aim at. It becomes one line saying where you are and one unbroken bar.
-   */
   .rail {
-    padding: 8px 12px 6px;
+    padding: 8px 14px 7px;
   }
-  .rail-where {
-    display: flex;
-    align-items: baseline;
-    gap: 9px;
-    margin: 0 0 7px;
-    min-width: 0;
-  }
-  .rail-where span {
-    font-family: var(--font-mono);
-    font-size: 9.5px;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--color-brass);
-    flex: none;
-  }
-  .rail-where em {
-    font-style: normal;
-    font-size: 14px;
-    font-weight: 600;
-    letter-spacing: -0.015em;
-    color: var(--color-text);
-    flex: 1 1 auto;
-    min-width: 0;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .rail-where i {
-    font-style: normal;
-    font-family: var(--font-mono);
-    font-size: 10px;
-    color: var(--color-text-3);
-    font-variant-numeric: tabular-nums;
-    flex: none;
-  }
-  .rail-name {
-    display: none;
-  }
-  /* One bar, evenly divided, with a gap only where a chapter changes. */
-  .rail-chs {
-    gap: 9px;
-  }
-  .tickm {
-    height: 26px;
-    padding: 11px 0 0;
-  }
-  .tickm::after {
-    height: 5px;
-  }
-
   /* Back and next carry the names on a phone too, but the contents button
      drops its word so the two of them keep room to be readable. */
   .deck-bar {
@@ -3227,4 +3181,169 @@ ul.pl.big li::before {
   width: 5px;
   height: 15px;
   border-radius: 2px;
+}
+
+
+/* ═══════════════════════════════════════════════ follow one caravan */
+
+/*
+ * A lane chart, not a stepper. Five places down the side, twelve stages across,
+ * and the line joining them is one caravan's record changing hands. Where the
+ * line jumps a lane, somebody carried something between two systems.
+ */
+.journey {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-width: 0;
+}
+.journey-view {
+  min-width: 0;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  padding: 6px 0;
+}
+.journey-svg {
+  display: block;
+  width: 100%;
+  min-width: 720px;
+  height: auto;
+}
+
+.j-now-band {
+  fill: var(--color-surface);
+}
+.j-lane {
+  stroke: var(--color-line);
+  stroke-width: 1;
+}
+.j-lane-name {
+  fill: var(--color-text-3);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+.j-path {
+  fill: none;
+  stroke: var(--color-brass);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  opacity: 0.65;
+}
+.j-bar {
+  fill: var(--color-flag);
+  opacity: 0.5;
+}
+.j-bar.now {
+  opacity: 1;
+}
+.j-bar-n {
+  fill: var(--color-text-3);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+.j-bar-n.now {
+  fill: var(--color-flag);
+}
+.j-node {
+  fill: var(--color-ink);
+  stroke: var(--color-brass);
+  stroke-width: 2;
+  transition:
+    r 0.18s,
+    fill 0.18s;
+}
+.j-col.now .j-node {
+  fill: var(--color-brass);
+}
+.j-also {
+  fill: var(--color-steel);
+  opacity: 0.75;
+}
+.j-tie {
+  stroke: var(--color-steel);
+  stroke-width: 1;
+  stroke-dasharray: 2 3;
+  opacity: 0.6;
+}
+.j-stage {
+  fill: var(--color-text-3);
+  font-family: var(--font-sans);
+  font-size: 12.5px;
+  font-weight: 500;
+}
+.j-col.now .j-stage {
+  fill: var(--color-text);
+  font-weight: 700;
+}
+.j-hit {
+  fill: transparent;
+  cursor: pointer;
+}
+.j-col:hover .j-node {
+  fill: var(--brass-dim);
+}
+
+.journey-hud {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1px;
+  background: var(--color-line);
+  border-top: 1px solid var(--color-line);
+}
+.journey-ctl {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 12px 0 0;
+}
+.journey-at {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.journey-at b {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  color: var(--color-text);
+}
+.journey-at i {
+  font-style: normal;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-3);
+}
+
+/* On a scene slide the chart fills the room and the rest is a strip below. */
+@media (min-width: 1000px) {
+  .slide-grid.scene .journey {
+    position: relative;
+    height: 100%;
+  }
+  .slide-grid.scene .journey-view {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    align-items: center;
+    padding: 0 24px;
+  }
+  .slide-grid.scene .journey-hud,
+  .slide-grid.scene .journey-ctl {
+    flex: none;
+    background: var(--color-ink);
+  }
+  .slide-grid.scene .journey-hud {
+    border-top: 1px solid var(--color-line);
+    background: var(--color-line);
+  }
+  .slide-grid.scene .journey-ctl {
+    padding: 12px 20px;
+  }
 }

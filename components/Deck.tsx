@@ -302,70 +302,60 @@ function DeckInner({ start }: { start: ChapterId }) {
 }
 
 /**
- * The progress rail.
+ * The progress rail. One line, everywhere.
  *
- * A desktop gets all three chapters named across the top, each sized by how
- * many slides it holds, with the current one naming where you are. A phone has
- * no room for that, so it gets one line saying the same thing and a single
- * unbroken bar of ticks underneath.
+ * It used to name all three chapters across the full width of the window on a
+ * desktop and something different on a phone. On a wide screen that put three
+ * headings floating over eleven ticks stretched across two thousand pixels,
+ * and it was two navigations to maintain. This is the one that worked: where
+ * you are on the left, how far through on the right, and one bar of ticks with
+ * a gap where the chapter changes. Capped and centred, so it stays a component
+ * rather than growing with the window.
  */
 function Rail({ i, onJump }: { i: number; onJump: (n: number) => void }) {
   const here = SLIDES[i];
   const chapter = CHAPTERS.find((c) => c.id === here.chapter);
   return (
     <nav className="rail" aria-label="Slides">
-      <p className="rail-where">
-        <span>{chapter?.name}</span>
-        <em>{here.marker}</em>
-        <i>
-          {i + 1}/{SLIDES.length}
-        </i>
-      </p>
-      <div className="rail-chs">
-        {CHAPTERS.map((c) => {
-          const idx = SLIDES.map((s, n) => ({ s, n })).filter(
-            ({ s }) => s.chapter === c.id,
-          );
-          const active = here.chapter === c.id;
-          return (
-            // Sized by slide count, so a tick is the same width everywhere and
-            // a two-slide chapter does not get the same room as a five.
-            <div
-              className={`rail-ch${active ? " on" : ""}`}
-              key={c.id}
-              style={{ flexGrow: idx.length }}
-            >
-              <button
-                type="button"
-                className="rail-name"
-                onClick={() => onJump(idx[0].n)}
+      <div className="rail-in">
+        <p className="rail-where">
+          <span>{chapter?.name}</span>
+          <em>{here.marker}</em>
+          <i>
+            {i + 1}/{SLIDES.length}
+          </i>
+        </p>
+        <div className="rail-chs">
+          {CHAPTERS.map((c) => {
+            const idx = SLIDES.map((s, n) => ({ s, n })).filter(
+              ({ s }) => s.chapter === c.id,
+            );
+            const active = here.chapter === c.id;
+            return (
+              // Sized by slide count, so every tick is the same width and a
+              // two-slide chapter does not get the room of a five.
+              <div
+                className={`rail-ch${active ? " on" : ""}`}
+                key={c.id}
+                style={{ flexGrow: idx.length }}
               >
-                {c.name}
-                {active ? (
-                  <em>
-                    {here.marker}
-                    <i>
-                      {idx.findIndex((x) => x.n === i) + 1}/{idx.length}
-                    </i>
-                  </em>
-                ) : null}
-              </button>
-              <span className="rail-ticks">
-                {idx.map(({ n }) => (
-                  <button
-                    key={n}
-                    type="button"
-                    className={`tickm${n === i ? " now" : ""}${n < i ? " done" : ""}`}
-                    onClick={() => onJump(n)}
-                    title={SLIDES[n].marker}
-                    aria-label={`Slide ${n + 1}: ${SLIDES[n].title}`}
-                    aria-current={n === i ? "step" : undefined}
-                  />
-                ))}
-              </span>
-            </div>
-          );
-        })}
+                <span className="rail-ticks">
+                  {idx.map(({ n }) => (
+                    <button
+                      key={n}
+                      type="button"
+                      className={`tickm${n === i ? " now" : ""}${n < i ? " done" : ""}`}
+                      onClick={() => onJump(n)}
+                      title={`${c.name} · ${SLIDES[n].marker}`}
+                      aria-label={`Slide ${n + 1}: ${SLIDES[n].title}`}
+                      aria-current={n === i ? "step" : undefined}
+                    />
+                  ))}
+                </span>
+              </div>
+            );
+          })}
+        </div>
       </div>
     </nav>
   );

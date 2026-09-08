@@ -7,6 +7,7 @@ import { PeopleModel } from "@/components/PeopleModel";
 import { HoursModel } from "@/components/HoursModel";
 import { SeasonSim } from "@/components/SeasonSim";
 import { HubSim } from "@/components/HubSim";
+import { VanJourney } from "@/components/VanJourney";
 import { CoverScene } from "@/components/CoverScene";
 import { flowGraph, unitGraph } from "./graphs";
 import { STEPS } from "./steps";
@@ -176,80 +177,6 @@ function StepList() {
   );
 }
 
-function VanPlayer() {
-  const [i, setI] = useState(0);
-  const [name, detail, livesIn, handledBy, reEntry] = VAN[i];
-  const last = VAN.length - 1;
-  const soFar = VAN.slice(0, i + 1).reduce((t, v) => t + Number(v[4]), 0);
-
-  usePublishStatus({
-    headline: name,
-    detail,
-    tone: reEntry === "0" ? "moss" : "flag",
-    figures: [
-      { value: `${i + 1}/${VAN.length}`, label: "stage" },
-      { value: reEntry, label: "re-entry here", tone: reEntry === "0" ? "moss" : "flag" },
-      { value: String(soFar), label: "re-entry so far", tone: soFar > 0 ? "flag" : "moss" },
-    ],
-  });
-  return (
-    <div className="van">
-      <div className="track">
-        {VAN.map(([s], n) => (
-          <button
-            key={s}
-            type="button"
-            className={`tick${n < i ? " done" : ""}${n === i ? " now" : ""}`}
-            onClick={() => setI(n)}
-            aria-label={`${n + 1}. ${s}`}
-            aria-current={n === i ? "step" : undefined}
-          />
-        ))}
-      </div>
-      <div aria-live="polite" className="van-main">
-        <p className="van-stage">{name}</p>
-        <p className="van-desc">{detail}</p>
-        <dl className="van-meta">
-          <div>
-            <dt>Lives in</dt>
-            <dd>{livesIn}</dd>
-          </div>
-          <div>
-            <dt>Handled by</dt>
-            <dd>{handledBy}</dd>
-          </div>
-          <div>
-            <dt>Re-entry points</dt>
-            <dd style={{ color: reEntry === "0" ? "var(--color-moss)" : "var(--color-flag)" }}>
-              {reEntry}
-            </dd>
-          </div>
-        </dl>
-      </div>
-      <div className="van-ctl">
-        <button
-          type="button"
-          onClick={() => setI((n) => Math.max(0, n - 1))}
-          disabled={i === 0}
-          aria-label="Previous stage"
-        >
-          &#8592;
-        </button>
-        <span className="van-id">
-          Unit 78412 · {i + 1} of {VAN.length}
-        </span>
-        <button
-          type="button"
-          onClick={() => setI((n) => Math.min(last, n + 1))}
-          disabled={i === last}
-          aria-label="Next stage"
-        >
-          &#8594;
-        </button>
-      </div>
-    </div>
-  );
-}
 
 function UnitMap() {
   const graph = useMemo(() => unitGraph(), []);
@@ -438,13 +365,12 @@ export const SLIDES: Slide[] = [
   },
   {
     id: "van",
-    kind: "content",
+    kind: "scene",
     marker: "Follow one",
     chapter: "operations",
-    title: "Follow one caravan.",
-    line: "From a batch number to a line in a handwritten book.",
-    body: () => <VanPlayer />,
-    footnote: "Tap the track to jump to a stage",
+    title: "One caravan, five places.",
+    line: "The line is its record changing hands. Click any stage.",
+    body: () => <VanJourney />,
   },
   {
     id: "people",
