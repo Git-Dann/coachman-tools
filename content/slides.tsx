@@ -2,8 +2,8 @@
 
 import { useMemo, useState } from "react";
 import { NodeMap3D } from "@/components/NodeMap3D";
-import { CapacityModel } from "@/components/CapacityModel";
-import { PeopleModel } from "@/components/PeopleModel";
+import { CeilingChart } from "@/components/CeilingChart";
+import { PeopleGrid } from "@/components/PeopleGrid";
 import { HoursModel } from "@/components/HoursModel";
 import { SeasonSim } from "@/components/SeasonSim";
 import { HubSim } from "@/components/HubSim";
@@ -379,7 +379,7 @@ export const SLIDES: Slide[] = [
     chapter: "leadership",
     title: `One desk holds ${word(HEAVIEST.steps.length)} of ${word(TOTAL_STEPS)}.`,
     line: "Take someone out and watch the work move, or stop.",
-    body: () => <PeopleModel />,
+    body: () => <PeopleGrid />,
     detailLabel: "Who holds what, and why we say so",
     detail: () => (
       <>
@@ -421,12 +421,12 @@ export const SLIDES: Slide[] = [
   },
   {
     id: "capacity",
-    kind: "content",
+    kind: "scene",
     marker: "The ceiling",
     chapter: "leadership",
     title: "Add caravans. Find the ceiling.",
     line: "The factory scales with lines. The order desk does not.",
-    body: () => <CapacityModel />,
+    body: () => <CeilingChart />,
     detailLabel: "The risks, in order",
     detail: () => (
       <div className="cards">

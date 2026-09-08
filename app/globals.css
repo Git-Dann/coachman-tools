@@ -3347,3 +3347,404 @@ ul.pl.big li::before {
     padding: 12px 20px;
   }
 }
+
+
+/* ══════════════════════════════════════════════════ who holds the steps */
+
+/*
+ * Sixteen cells, one per step, each naming who holds it. With nobody away,
+ * twelve of them say the same name and you can see that without reading.
+ */
+.pgrid {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.pgrid-view {
+  min-width: 0;
+  padding: 4px 0;
+}
+.pg-cells {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(168px, 1fr));
+  gap: 1px;
+  background: var(--color-line);
+  border: 1px solid var(--color-line);
+  border-radius: var(--r);
+  overflow: hidden;
+}
+.pg-cell {
+  position: relative;
+  background: var(--color-surface);
+  padding: 12px 13px 11px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  border-left: 3px solid var(--color-steel);
+  transition:
+    border-color 0.25s,
+    background 0.25s;
+}
+.pg-cell b {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 400;
+  letter-spacing: 0.1em;
+  color: var(--color-text-3);
+}
+.pg-t {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.012em;
+  line-height: 1.25;
+  color: var(--color-text);
+}
+.pg-who {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  color: var(--color-steel);
+  margin-top: auto;
+}
+.pg-who em {
+  font-style: normal;
+  font-size: 8.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-brass);
+}
+.pg-from {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--color-text-3);
+}
+.pg-cell.picked {
+  border-left-color: var(--color-brass);
+  background: color-mix(in srgb, var(--color-brass) 8%, var(--color-surface));
+}
+.pg-cell.picked .pg-who {
+  color: var(--color-brass);
+}
+.pg-cell.stopped {
+  border-left-color: var(--color-flag);
+  background: color-mix(in srgb, var(--color-flag) 11%, var(--color-surface));
+}
+.pg-cell.stopped .pg-t,
+.pg-cell.stopped .pg-who {
+  color: var(--color-flag);
+}
+
+.pg-key {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 22px;
+  margin: 0;
+  padding: 11px 0 0;
+}
+.pg-key li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-3);
+}
+.pg-key i {
+  width: 13px;
+  height: 13px;
+  border-radius: 3px;
+  flex: none;
+}
+.pg-key .k-held {
+  background: var(--color-steel);
+}
+.pg-key .k-picked {
+  background: var(--color-brass);
+}
+.pg-key .k-stopped {
+  background: var(--color-flag);
+}
+
+.pg-ctl {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 12px 0 0;
+}
+.pg-ctl-label {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-text-3);
+}
+/* Each person is a button carrying their own load, so taking somebody out and
+   seeing where the work went is one gesture in one place. */
+.pchip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-line-2);
+  border-radius: var(--r);
+  color: var(--color-text);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  padding: 9px 13px;
+  min-height: 44px;
+  cursor: pointer;
+}
+.pchip:hover {
+  border-color: var(--color-steel);
+}
+.pchip-bar {
+  display: flex;
+  width: 62px;
+  height: 5px;
+  border-radius: 3px;
+  overflow: hidden;
+  background: var(--color-surface-3);
+  flex: none;
+}
+.pchip-bar .own {
+  background: var(--color-steel);
+}
+.pchip-bar .extra {
+  background: var(--color-flag);
+}
+.pchip b {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  color: var(--color-text-3);
+  font-variant-numeric: tabular-nums;
+}
+.pchip.away {
+  border-color: var(--color-flag);
+  color: var(--color-text-3);
+}
+.pchip.away b {
+  color: var(--color-flag);
+  text-transform: uppercase;
+}
+
+@media (min-width: 1000px) {
+  .slide-grid.scene .pgrid {
+    height: 100%;
+  }
+  .slide-grid.scene .pgrid-view {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    display: flex;
+    align-items: center;
+    padding: 20px 24px;
+  }
+  .slide-grid.scene .pg-cells {
+    width: 100%;
+    border-radius: 0;
+    border-left: 0;
+    border-right: 0;
+  }
+  .slide-grid.scene .pg-key,
+  .slide-grid.scene .pg-ctl {
+    flex: none;
+    padding: 12px 20px;
+    background: var(--color-ink);
+    border-top: 1px solid var(--color-line);
+  }
+}
+
+
+/* ══════════════════════════════════════════════════════════ the ceiling */
+
+/*
+ * Two ceilings on one axis with demand standing against them. Spending on the
+ * factory lifts one of them; the other only moves when somebody is added to
+ * the order desk. Whichever is lower decides, and everything above it is
+ * shaded, because that is work the business turns away.
+ */
+.ceil {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.ceil-view {
+  min-width: 0;
+  overflow-x: auto;
+  padding: 4px 0;
+}
+.ceil-svg {
+  display: block;
+  width: 100%;
+  min-width: 680px;
+  height: auto;
+}
+.c-grid {
+  stroke: var(--color-line);
+  stroke-width: 1;
+}
+.c-tick,
+.c-axis,
+.c-unit {
+  fill: var(--color-text-3);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+.c-unit {
+  font-size: 9.5px;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+.c-axis {
+  font-size: 11px;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+.c-demand {
+  fill: var(--color-steel);
+  opacity: 0.5;
+  transition:
+    y 0.35s cubic-bezier(0.22, 0.7, 0.25, 1),
+    height 0.35s cubic-bezier(0.22, 0.7, 0.25, 1);
+}
+.c-away {
+  fill: var(--color-flag);
+  opacity: 0.55;
+  transition:
+    y 0.35s cubic-bezier(0.22, 0.7, 0.25, 1),
+    height 0.35s cubic-bezier(0.22, 0.7, 0.25, 1);
+}
+.c-ceiling line {
+  stroke-width: 2;
+  transition: y1 0.35s cubic-bezier(0.22, 0.7, 0.25, 1),
+    y2 0.35s cubic-bezier(0.22, 0.7, 0.25, 1);
+}
+.c-ceiling text {
+  transition: y 0.35s cubic-bezier(0.22, 0.7, 0.25, 1);
+}
+.c-ceiling.factory line {
+  stroke: var(--color-moss);
+}
+.c-ceiling.desk line {
+  stroke: var(--color-brass);
+  stroke-dasharray: 7 4;
+}
+.c-ceiling.desk.binding line {
+  stroke: var(--color-flag);
+  stroke-dasharray: none;
+}
+.c-lab {
+  fill: var(--color-text-2);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.c-val {
+  fill: var(--color-text);
+  font-family: var(--font-sans);
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+.c-ceiling.factory .c-val {
+  fill: var(--color-moss);
+}
+.c-ceiling.desk.binding .c-val,
+.c-ceiling.desk.binding .c-lab {
+  fill: var(--color-flag);
+}
+.c-note {
+  fill: var(--color-flag);
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.ceil-hud {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1px;
+  background: var(--color-line);
+  border-top: 1px solid var(--color-line);
+}
+.ceil-ctl {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 16px 26px;
+  padding: 14px 0 0;
+}
+.dial {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+.dial > span {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--color-text-3);
+}
+.dial b {
+  margin-left: auto;
+  font-family: var(--font-sans);
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  text-transform: none;
+  color: var(--color-brass);
+  font-variant-numeric: tabular-nums;
+}
+.dial input[type="range"] {
+  width: 100%;
+}
+
+@media (min-width: 1000px) {
+  .slide-grid.scene .ceil {
+    height: 100%;
+  }
+  .slide-grid.scene .ceil-view {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    align-items: center;
+    padding: 16px 24px;
+  }
+  .slide-grid.scene .ceil-hud,
+  .slide-grid.scene .ceil-ctl {
+    flex: none;
+    background: var(--color-ink);
+  }
+  .slide-grid.scene .ceil-hud {
+    background: var(--color-line);
+    border-top: 1px solid var(--color-line);
+  }
+  .slide-grid.scene .ceil-ctl {
+    padding: 14px 20px 16px;
+    border-top: 1px solid var(--color-line);
+  }
+}
