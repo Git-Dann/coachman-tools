@@ -122,7 +122,12 @@ body {
   font-size: 16px;
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
-  overflow-x: hidden;
+  /*
+   * clip, not hidden. hidden makes this a scroll container, and a scroll
+   * container between the viewport and a sticky element is one of the ways
+   * sticky silently stops working.
+   */
+  overflow-x: clip;
   transition: background-color 0.4s, color 0.4s;
 }
 
@@ -4345,7 +4350,18 @@ ul.pl.big li::before {
 .pin {
   position: relative;
 }
-.pin-in {
+/*
+ * The pin itself.
+ *
+ * These rules were written against .pin-in, and the component renders
+ * .drive-pin, so nothing matched and the section was never pinned: the figure
+ * sat at the top of a container four screens tall and scrolled away, leaving
+ * four thousand pixels of empty page behind it. That was the gap.
+ */
+.drive {
+  position: relative;
+}
+.drive-pin {
   position: sticky;
   top: 0;
   height: 100svh;
@@ -4353,15 +4369,41 @@ ul.pl.big li::before {
   align-content: center;
   overflow: hidden;
 }
+/*
+ * The figure takes the height it is given rather than sitting at its content
+ * size in the middle of the screen, which is what left five hundred pixels of
+ * nothing above and below it on a tall window. It is capped so that on a very
+ * tall one the frame stays landscape instead of turning into a portrait box
+ * with a wide diagram clipped inside it, and the column is wider than the rest
+ * of the page for the same reason.
+ */
 .pin-grid {
   width: 100%;
-  max-width: 1280px;
+  max-width: min(1560px, 94vw);
+  /* svh, not %: the centred row is content-sized, so a percentage has nothing to resolve against. */
+  height: min(100svh, 1180px);
+  min-height: 0;
   margin: 0 auto;
-  padding: 84px 24px 32px;
+  padding: 84px 24px 36px;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 330px;
-  gap: 44px;
-  align-items: center;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 48px;
+  align-items: stretch;
+}
+/* The figure fills the height it is given; the words sit beside its middle. */
+.pin-grid > .frame {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 18px;
+}
+/* The figure inside takes the frame's height rather than its own. */
+.pin-grid > .frame > * {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.pin-say {
+  align-self: center;
 }
 @media (max-width: 1023px) {
   .pin-grid {
@@ -4384,9 +4426,16 @@ ul.pl.big li::before {
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 20px;
   margin-top: 56px;
-  align-items: start;
+  align-items: stretch;
+}
+.moves > * {
+  display: flex;
+  min-height: 100%;
 }
 .move {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
   border-radius: var(--r-card);
   border: var(--ring);
   background: var(--color-surface);
@@ -4394,24 +4443,38 @@ ul.pl.big li::before {
   overflow: hidden;
 }
 .move-say {
-  padding: 26px 24px 20px;
-}
-/* One accent per move, the way the reference colours its supporting lines. */
-.move.a .move-say .note {
-  color: var(--color-brass);
-}
-.move.b .move-say .note {
-  color: var(--color-flag);
-}
-.move.c .move-say .note {
-  color: var(--color-moss);
+  flex: 1;
+  padding: 26px 24px 22px;
 }
 .move-fig {
-  padding: 0 22px;
-  height: 236px;
+  flex: none;
+}
+/*
+ * One accent per move, as a rule along the top edge. It used to colour the
+ * paragraph itself, and a paragraph of red body copy reads as an error rather
+ * than as an accent.
+ */
+.move {
+  border-top: 3px solid var(--color-line-2);
+}
+.move.a {
+  border-top-color: var(--color-brass);
+}
+.move.b {
+  border-top-color: var(--color-flag);
+}
+.move.c {
+  border-top-color: var(--color-moss);
+}
+.move-say .note {
+  color: var(--color-text-2);
+}
+.move-fig {
+  position: relative;
+  height: 246px;
   overflow: hidden;
-  display: flex;
-  align-items: flex-end;
+  border-top: 1px solid var(--color-line);
+  background: var(--color-surface-2);
 }
 .move-fig > * {
   width: 100%;
@@ -4773,12 +4836,7 @@ ul.pl.big li::before {
 .mini-fig .pg-cell.stopped {
   background: var(--color-flag);
 }
-.move-fig .mini-fig {
-  position: relative;
-  inset: auto;
-  padding: 14px 14px 0;
-  align-items: flex-end;
-}
+
 
 /* ------------------------------------------ figures inside a framed panel */
 

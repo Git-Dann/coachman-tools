@@ -228,7 +228,7 @@ function Mini({ children }: { children: React.ReactNode }) {
 
 function Throttle() {
   return (
-    <Drive length={4.2} id="throttle" className="pin">
+    <Drive length={3} id="throttle" className="pin">
       {(t) => (
         <div className="pin-grid">
           <div className="frame">

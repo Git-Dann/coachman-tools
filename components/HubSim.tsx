@@ -780,9 +780,9 @@ export function HubSim({ mode, drive }: { mode: Mode; drive?: number }) {
             tone: "moss" as const,
           }
         : {
-            value: fmt(l.throttled),
-            label: "turned away",
-            tone: l.throttled > 0 ? ("flag" as const) : ("moss" as const),
+            value: fmt(l.peopleNeeded),
+            label: `people needed on the desk, against ${DESK_PEOPLE}`,
+            tone: l.peopleNeeded > DESK_PEOPLE ? ("flag" as const) : ("moss" as const),
           },
     ],
   });
@@ -875,9 +875,21 @@ export function HubSim({ mode, drive }: { mode: Mode; drive?: number }) {
             </span>
           </div>
         ) : (
-          <div className={`hud-cell ${l.throttled > 0 ? "flag" : ""}`}>
-            <b className={l.throttled > 0 ? "bad" : "ok"}>{fmt(l.throttled)}</b>
-            <span>turned away, desk cannot take them</span>
+          /*
+           * Not a "turned away" count. Nothing is turned away by a process
+           * whose admin cost per caravan is flat: you either staff it or you
+           * miss the season, and the honest reading of the throttle is how
+           * many people the desk would need against the two it has.
+           */
+          <div
+            className={`hud-cell ${l.peopleNeeded > DESK_PEOPLE ? "flag" : ""}`}
+          >
+            <b className={l.peopleNeeded > DESK_PEOPLE ? "bad" : "ok"}>
+              {fmt(l.peopleNeeded)}
+            </b>
+            <span>
+              people needed on the order desk, against the {DESK_PEOPLE} it has
+            </span>
           </div>
         )}
       </div>
