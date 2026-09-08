@@ -4111,14 +4111,27 @@ ul.pl.big li::before {
   background: var(--color-brass);
   color: #fff;
 }
+.bar-links {
+  display: flex;
+  gap: 2px;
+}
+/*
+ * On a phone the section pills push the theme toggle and the ask clean off the
+ * right edge, and this is one page you can simply scroll. Ordering matters:
+ * this has to sit after the rule it is overriding.
+ */
 @media (max-width: 860px) {
   .bar-links {
     display: none;
   }
 }
-.bar-links {
-  display: flex;
-  gap: 2px;
+@media (max-width: 420px) {
+  .bar-mark span {
+    display: none;
+  }
+  .bar {
+    padding: 10px 12px;
+  }
 }
 
 /* ------------------------------------------------------------------ hero */
@@ -4263,11 +4276,22 @@ ul.pl.big li::before {
   grid-template-columns: repeat(auto-fit, minmax(268px, 1fr));
   gap: 16px;
   margin-top: 52px;
-  align-items: start;
+  align-items: stretch;
+}
+/*
+ * A row of cards is a row, so they are all the tallest one's height. The
+ * reveal wrapper sits between the grid and the card, so it has to pass the
+ * stretch through or the card only ever fills its own content.
+ */
+.cards > * {
+  display: flex;
+  min-height: 100%;
 }
 /* A picture with a name under it, the way the reference does its screens. */
 .card {
-  display: block;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
   padding: 0;
   border-radius: var(--r-card);
   border: var(--ring);
@@ -4282,11 +4306,15 @@ ul.pl.big li::before {
 }
 .card-fig {
   position: relative;
+  flex: none;
   aspect-ratio: 4 / 3;
   overflow: hidden;
   background: var(--color-surface-2);
 }
 .card-say {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
   padding: 18px 20px 22px;
 }
 .card-say b {
@@ -4425,7 +4453,12 @@ ul.pl.big li::before {
   gap: 30px 26px;
   margin-top: 52px;
 }
-.nums b {
+/*
+ * Direct children only. The counting number renders a span of its own inside
+ * the b, and the label rule below was landing on it, which is why a 78px
+ * figure came out at 10px in mono caps.
+ */
+.nums > li > b {
   display: block;
   font-family: var(--font-display);
   font-weight: 300;
@@ -4435,13 +4468,13 @@ ul.pl.big li::before {
   color: var(--color-text);
   font-variant-numeric: tabular-nums;
 }
-.nums .bad b {
+.nums > li.bad > b {
   color: var(--color-flag);
 }
-.nums .good b {
+.nums > li.good > b {
   color: var(--color-moss);
 }
-.nums span {
+.nums > li > span {
   display: block;
   margin-top: 10px;
   font-family: var(--font-mono);
@@ -4691,15 +4724,54 @@ ul.pl.big li::before {
 .mini-fig .journey-view,
 .mini-fig .pgrid-view,
 .mini-fig .ceil-view {
-  overflow: visible;
+  overflow: hidden;
   padding: 0;
 }
-/* Only the first few cells of the grid, so it reads as a texture not a table. */
-.mini-fig .pg-cells {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+/*
+ * At full size these charts hold a floor width so they stay readable and
+ * scroll sideways instead of squashing. In a card there is nothing to scroll
+ * with, so the whole shape scales down to fit rather than running off the
+ * edge.
+ */
+.mini-fig .journey-svg,
+.mini-fig .tl-svg {
+  min-width: 0;
 }
-.mini-fig .pg-cell:nth-child(n + 7) {
+/*
+ * All sixteen cells, none of the words. At card size the grid is the finding,
+ * not any one step: twelve of one colour, two of another. Six cells at reading
+ * size spilled out of the card instead, which read as a broken panel.
+ */
+.mini-fig .pg-cells {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 5px;
+}
+.mini-fig .pgrid,
+.mini-fig .pgrid-view,
+.mini-fig .pg-cells {
+  align-self: stretch;
+  height: 100%;
+}
+.mini-fig .pg-cells {
+  grid-auto-rows: minmax(0, 1fr);
+}
+.mini-fig .pg-cell {
+  min-height: 0;
+  padding: 0;
+}
+.mini-fig .pg-cell > * {
   display: none;
+}
+/* Without the words, the state has to be the whole cell rather than an edge. */
+.mini-fig .pg-cell {
+  border-left: 0;
+  background: color-mix(in srgb, var(--color-steel) 30%, var(--color-surface));
+}
+.mini-fig .pg-cell.picked {
+  background: var(--color-brass);
+}
+.mini-fig .pg-cell.stopped {
+  background: var(--color-flag);
 }
 .move-fig .mini-fig {
   position: relative;
@@ -4753,4 +4825,26 @@ ul.pl.big li::before {
 .pin-grid .frame .hub-hud {
   flex: none;
   border-top: 1px solid var(--color-line);
+}
+
+/* The journey read as a picture: nothing picked out, nothing to operate. */
+.journey.still .j-hit {
+  pointer-events: none;
+}
+.journey.still .journey-view {
+  cursor: default;
+}
+
+/* Three numbers, at the size three numbers can afford to be. */
+.nums.three {
+  grid-template-columns: repeat(auto-fit, minmax(232px, 1fr));
+  gap: 34px;
+  text-align: center;
+  justify-items: center;
+}
+.nums.three > li > b {
+  font-size: clamp(3rem, 5.6vw, 4.6rem);
+}
+.nums.three > li > span {
+  max-width: 24ch;
 }

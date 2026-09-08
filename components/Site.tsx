@@ -331,33 +331,41 @@ function Numbers() {
       <Reveal>
         <div className="mid">
           <p className="tag">What it costs</p>
-          <h2 className="h2">The size of it, in the numbers you gave us.</h2>
+          <h2 className="h2">
+            Fourteen hundred of those hours are the same thing, typed twice.
+          </h2>
+          <p className="lede">
+            Three numbers, and they are all the same number seen from different
+            sides. The hours are estimates against your volume, because nobody
+            was timed on the day. The counts are counted.
+          </p>
         </div>
       </Reveal>
       <Reveal delay={0.1}>
-        <ul className="nums">
-          <Num n={2000} l="caravans a year, today" />
-          <Num n={1867} l="hours a year on the order desk" bad />
-          <Num n={1333} l="of those, entering it again" bad />
-          <Num n={347} l="hours on four manual tasks alone" bad />
-          <Num n={21250} l="paper files piled up in five years" bad />
-          <Num n={0} l="places you can look up one caravan" bad />
+        <ul className="nums three">
+          <Num n={2000} l="caravans a year" />
+          <Num n={1867} l="hours a year on the order desk · estimate" bad />
+          <Num n={1333} l="of those hours entering it again · estimate" bad />
         </ul>
       </Reveal>
+
       <Reveal delay={0.16}>
-        <div className="frame" style={{ marginTop: 52 }}>
-          <div className="frame-in">
-            <VanJourney />
-          </div>
+        <div className="mid" style={{ marginTop: 96 }}>
+          <p className="tag">Why</p>
+          <h2 className="h2">The record never settles anywhere.</h2>
+          <p className="lede">
+            One caravan, stage by stage. The line is the record changing hands.
+            Every time it jumps a lane, somebody carried something between two
+            systems, and the bars are where it got typed in again.
+          </p>
         </div>
       </Reveal>
       <Reveal delay={0.2}>
-        <p className="note" style={{ marginTop: 20, maxWidth: "62ch" }}>
-          One caravan&rsquo;s record, stage by stage. The line is it changing
-          hands: where the line jumps a lane, somebody carried something between
-          two systems. Hours per task are estimates for you to correct, because
-          nobody was timed on the day. Everything else is counted.
-        </p>
+        <div className="frame" style={{ marginTop: 40 }}>
+          <div className="frame-in">
+            <VanJourney still />
+          </div>
+        </div>
       </Reveal>
     </section>
   );

@@ -63,10 +63,18 @@ const LANE_TOP = BAR_TOP + BAR_H + 30;
 const LANE_H = 52;
 const H = LANE_TOP + LANES.length * LANE_H + 52;
 
-export function VanJourney({ drive }: { drive?: number } = {}) {
+export function VanJourney({
+  drive,
+  still,
+}: { drive?: number; still?: boolean } = {}) {
   const [own, setOwn] = useState(0);
   /* On the page the scroll walks the caravan through its twelve stages. */
   const driven = drive !== undefined;
+  /*
+   * Still is the whole chart at once, with nothing picked out and no stepper.
+   * The finding is the shape of the line, not any one stage, and a highlighted
+   * column with no way to move it only asks a question it cannot answer.
+   */
 
   const stages = useMemo(
     () =>
@@ -81,12 +89,14 @@ export function VanJourney({ drive }: { drive?: number } = {}) {
     [],
   );
 
-  const at = driven
-    ? Math.min(
-        VAN.length - 1,
-        Math.floor(Math.max(0, (drive! - 0.08) / 0.84) * VAN.length),
-      )
-    : own;
+  const at = still
+    ? -1
+    : driven
+      ? Math.min(
+          VAN.length - 1,
+          Math.floor(Math.max(0, (drive! - 0.08) / 0.84) * VAN.length),
+        )
+      : own;
   const setAt = setOwn;
 
   const colW = (W - GUT - PAD_R) / stages.length;
@@ -103,9 +113,9 @@ export function VanJourney({ drive }: { drive?: number } = {}) {
   );
   const soFar = stages.slice(0, at + 1).reduce((t, s) => t + s.reEntry, 0);
   const total = stages.reduce((t, s) => t + s.reEntry, 0);
-  const here = stages[at];
+  const here = stages[Math.max(0, at)];
 
-  usePublishStatus({
+  usePublishStatus(still ? null : {
     headline: `${here.name}. ${here.livesIn}.`,
     detail: here.detail,
     tone: here.reEntry === 0 ? "moss" : "flag",
@@ -125,7 +135,7 @@ export function VanJourney({ drive }: { drive?: number } = {}) {
   });
 
   return (
-    <div className="journey">
+    <div className={`journey${still ? " still" : ""}`}>
       <div className="journey-view">
         <svg
           viewBox={`0 0 ${W} ${H}`}
@@ -134,13 +144,15 @@ export function VanJourney({ drive }: { drive?: number } = {}) {
           aria-label={`${VAN_UNIT}: the record moves between ${LANES.length} places across ${stages.length} stages, crossing between them ${crossings} times.`}
         >
           {/* the column under the pointer, so the eye has somewhere to be */}
-          <rect
-            x={GUT + colW * at}
-            y={BAR_TOP - 10}
-            width={colW}
-            height={H - BAR_TOP - 4}
-            className="j-now-band"
-          />
+          {at >= 0 ? (
+            <rect
+              x={GUT + colW * at}
+              y={BAR_TOP - 10}
+              width={colW}
+              height={H - BAR_TOP - 4}
+              className="j-now-band"
+            />
+          ) : null}
 
           {/* lanes */}
           {LANES.map((l, n) => (
@@ -267,31 +279,34 @@ export function VanJourney({ drive }: { drive?: number } = {}) {
         </div>
       </div>
 
-      <div className="journey-ctl">
-        <button
-          type="button"
-          className="mini big"
-          onClick={() => setAt((n) => Math.max(0, n - 1))}
-          disabled={at === 0}
-        >
-          &#8592; Back
-        </button>
-        <span className="journey-at">
-          <b>{here.name}</b>
-          <i>
-            {VAN_UNIT} &middot; stage {at + 1} of {stages.length}
-          </i>
-        </span>
-        <button
-          type="button"
-          className="mini big"
-          onClick={() => setAt((n) => Math.min(stages.length - 1, n + 1))}
-          disabled={at === stages.length - 1}
-        >
-          On &#8594;
-        </button>
-        <span className="ssim-hint">Click any stage</span>
-      </div>
+      {still ? null : (
+        <div className="journey-ctl">
+          <button
+            type="button"
+            className="mini big"
+            onClick={() => setAt((n) => Math.max(0, n - 1))}
+            disabled={at === 0}
+          >
+            &#8592; Back
+          </button>
+          <span className="journey-at">
+            <b>{here.name}</b>
+            <i>
+              {VAN_UNIT} &middot; stage {at + 1} of {stages.length}
+            </i>
+          </span>
+          <button
+            type="button"
+            className="mini big"
+            onClick={() => setAt((n) => Math.min(stages.length - 1, n + 1))}
+            disabled={at === stages.length - 1}
+          >
+            On &#8594;
+          </button>
+          <span className="ssim-hint">Click any stage</span>
+        </div>
+      )}
+
     </div>
   );
 }

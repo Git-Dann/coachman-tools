@@ -31,7 +31,18 @@ export function useReducedMotion(): boolean {
   return reduced;
 }
 
-/** A block that arrives on the way in, then leaves itself alone. */
+/**
+ * A block that arrives on the way in, then leaves itself alone.
+ *
+ * The obvious version of this is one line of `useInView(once)`, and it has a
+ * failure that empties the page: an anchor jump moves a block from below the
+ * viewport to above it between two frames, the observer never sees it
+ * intersect, and it stays at zero opacity for the rest of the session. Every
+ * pill in the bar did that. So arrival is also true for anything the page has
+ * already scrolled past, checked on mount and on every hash change, and a block
+ * that is already behind you appears without animating, because animating
+ * something offscreen is just a delay before you scroll back to it.
+ */
 export function Reveal({
   children,
   delay = 0,
@@ -44,18 +55,47 @@ export function Reveal({
   as?: "div" | "section" | "li" | "p";
 }) {
   const ref = useRef<HTMLDivElement>(null);
-  const seen = useInView(ref, { once: true, margin: "-12% 0px -12% 0px" });
+  const inView = useInView(ref, { once: true, margin: "-12% 0px -12% 0px" });
   const reduced = useReducedMotion();
+  /* null = not arrived. "in" = arrived on the way in. "past" = already behind. */
+  const [how, setHow] = useState<null | "in" | "past">(null);
+
+  useEffect(() => {
+    if (inView) setHow((h) => h ?? "in");
+  }, [inView]);
+
+  useEffect(() => {
+    const check = () => {
+      const el = ref.current;
+      if (!el) return;
+      const r = el.getBoundingClientRect();
+      /* Reached the top of the screen, or gone off it entirely. */
+      if (r.top < window.innerHeight) setHow((h) => h ?? (r.bottom < 0 ? "past" : "in"));
+    };
+    check();
+    window.addEventListener("hashchange", check);
+    /* Belt and braces: a flick-scroll can outrun the observer too. */
+    window.addEventListener("scroll", check, { passive: true });
+    return () => {
+      window.removeEventListener("hashchange", check);
+      window.removeEventListener("scroll", check);
+    };
+  }, []);
+
+  const shown = how !== null;
+  const instant = reduced || how === "past";
   const M = motion[as] as typeof motion.div;
   return (
     <M
       ref={ref}
       className={className}
-      initial={reduced ? undefined : { opacity: 0, y: 22 }}
-      animate={
-        reduced ? undefined : { opacity: seen ? 1 : 0, y: seen ? 0 : 22 }
+      initial={{ opacity: 0, y: 22 }}
+      animate={{ opacity: shown ? 1 : 0, y: shown ? 0 : 22 }}
+      transition={
+        instant
+          ? { duration: 0 }
+          : { duration: 0.7, delay, ease: [0.22, 0.7, 0.25, 1] }
       }
-      transition={{ duration: 0.7, delay, ease: [0.22, 0.7, 0.25, 1] }}
     >
       {children}
     </M>

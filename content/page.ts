@@ -34,8 +34,14 @@ export const ASKS: readonly { t: string; d: string }[] = [
   { t: "A decision", d: "The 2027 season as the changeover." },
 ];
 
-/** Said in the room, and the reason the plan is shaped the way it is. */
+/**
+ * How the build is sequenced, in the terms of the thing being built.
+ *
+ * The sentiment came out of the room, said about a car. It is our line rather
+ * than theirs, because putting words in somebody's mouth is not worth a
+ * metaphor, and a caravan has a chassis of its own to talk about.
+ */
 export const QUOTE = {
-  text: "We are building a car. Get the shell in first, then the suspension and the intricate bits come later.",
-  cite: "Said in the room",
+  text: "Get the shell on the chassis first. One caravan, one record, one place to look it up. The trim and the intricate bits come after, once there is something to fit them to.",
+  cite: "How we would sequence it",
 };
