@@ -181,8 +181,14 @@ export function SeasonTimeline({ drive }: { drive?: number } = {}) {
           />
 
           {/* one row per caravan */}
+          {/*
+            * The card shows the chart on its own, so the chart has to carry the
+            * caveat: this is a simulation of the process as it was described,
+            * not a measurement of it.
+            */}
           <text x={LEFT} y={chartTop - 7} className="tl-cap">
-            One row per caravan, left to right in time
+            One row per caravan, left to right in time &middot; simulated, not
+            measured
           </text>
           {season.units.map((u, r) => {
             const y = chartTop + r * (ROW_H + ROW_GAP);

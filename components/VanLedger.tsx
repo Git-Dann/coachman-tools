@@ -25,13 +25,19 @@ import { VAN, VAN_UNIT } from "@/content/van";
  * counts are counts.
  */
 
-/** The places one caravan's record lives. */
+/**
+ * The places one caravan's record lives.
+ *
+ * Short headers. The full names wrapped inside a column and printed
+ * "SPREADSHEE / T", which is the kind of detail that makes a whole figure look
+ * broken. The long name is still there for a screen reader.
+ */
 const PLACES = [
-  { id: "pix", name: "Pix", note: "The order system" },
-  { id: "sheet", name: "Spreadsheet", note: "Excel, more than one" },
-  { id: "paper", name: "Paper", note: "Printed, handwritten" },
-  { id: "msg", name: "Email, phone", note: "In somebody's inbox" },
-  { id: "sage", name: "Sage", note: "The accounts" },
+  { id: "pix", short: "Pix", name: "Pix, the order system" },
+  { id: "sheet", short: "Excel", name: "Spreadsheets, more than one" },
+  { id: "paper", short: "Paper", name: "Paper, printed and handwritten" },
+  { id: "msg", short: "Email", name: "Email and phone" },
+  { id: "sage", short: "Sage", name: "Sage, the accounts" },
 ] as const;
 
 type PlaceId = (typeof PLACES)[number]["id"];
@@ -75,14 +81,23 @@ export function VanLedger({ bare }: { bare?: boolean } = {}) {
 
   return (
     <div className={`led${bare ? " bare" : ""}`}>
-      <div className="led-grid" role="table" aria-label={`${VAN_UNIT}: where the record is at each of ${stages.length} stages, and how many times it is entered again.`}>
+      <div
+        className="led-grid"
+        role="table"
+        aria-label={`${VAN_UNIT}: where the record is at each of ${stages.length} stages, and how many times it is entered again.`}
+      >
         <div className="led-head" role="row">
           <span className="led-h-stage" role="columnheader">
             Stage
           </span>
           {PLACES.map((p) => (
-            <span key={p.id} className="led-h-place" role="columnheader">
-              {p.name}
+            <span
+              key={p.id}
+              className={`led-h-place${p.id === "sheet" ? " xl" : ""}`}
+              role="columnheader"
+              title={p.name}
+            >
+              {p.short}
             </span>
           ))}
           <span className="led-h-re" role="columnheader">
@@ -90,45 +105,90 @@ export function VanLedger({ bare }: { bare?: boolean } = {}) {
           </span>
         </div>
 
-        {stages.map((s, i) => (
-          <div
-            key={s.name}
-            className={`led-row${s.split ? " split" : ""}`}
-            role="row"
-          >
-            <span className="led-stage" role="cell">
-              <i>{String(i + 1).padStart(2, "0")}</i>
-              <b>{s.name}</b>
-              <em>{s.detail}</em>
-            </span>
-            {PLACES.map((p) => {
-              const on = s.places.includes(p.id);
-              return (
-                <span
-                  key={p.id}
-                  className={`led-cell${on ? " on" : ""}${
-                    on && p.id === "sheet" ? " sheet" : ""
-                  }`}
-                  role="cell"
-                >
-                  <span className="led-dot" aria-hidden />
-                  <span className="sr">
-                    {on ? `${s.name} is in ${p.name}` : ""}
-                  </span>
-                </span>
-              );
-            })}
-            <span className="led-re" role="cell">
-              <span className="led-sheets" aria-hidden>
-                {Array.from({ length: s.reEntry }, (_, k) => (
-                  <i key={k} style={{ opacity: 1 - (k / max) * 0.35 }} />
-                ))}
+        {stages.map((s, i) => {
+          const at = s.places.map((id) =>
+            PLACES.findIndex((p) => p.id === id),
+          );
+          const first = Math.min(...at);
+          const last = Math.max(...at);
+          return (
+            <div key={s.name} className="led-row" role="row">
+              <span className="led-stage" role="cell" style={{ gridColumn: 1 }}>
+                <i>{String(i + 1).padStart(2, "0")}</i>
+                <b>{s.name}</b>
+                <em>{s.detail}</em>
               </span>
-              <b className={s.reEntry > 0 ? "bad" : "ok"}>{s.reEntry}</b>
-            </span>
-          </div>
-        ))}
+
+              {/*
+               * The overlap, drawn rather than tinted. A bar joining the two
+               * places a single unit is in at the same stage says "at once"
+               * the way a shaded row behind everything else does not, and it
+               * leaves the row background alone.
+               */}
+              {s.split ? (
+                <span
+                  className="led-tie"
+                  style={{ gridColumn: `${2 + first} / ${3 + last}` }}
+                  aria-hidden
+                />
+              ) : null}
+
+              {PLACES.map((p, c) => {
+                const on = s.places.includes(p.id);
+                return (
+                  <span
+                    key={p.id}
+                    className={`led-cell${on ? " on" : ""}${
+                      p.id === "sheet" ? " xl" : ""
+                    }`}
+                    role="cell"
+                    /*
+                     * Every cell is pinned to its own column. The tie is
+                     * another child of the same grid, and with auto-placement
+                     * it took a slot and pushed the marks onto a second row,
+                     * which is what tore the table in half.
+                     */
+                    style={{ gridColumn: 2 + c }}
+                  >
+                    {on ? <span className="led-dot" aria-hidden /> : null}
+                    <span className="sr">{on ? p.name : "not here"}</span>
+                  </span>
+                );
+              })}
+
+              <span
+                className="led-re"
+                role="cell"
+                style={{ gridColumn: PLACES.length + 2 }}
+              >
+                <span className="led-sheets" aria-hidden>
+                  {Array.from({ length: s.reEntry }, (_, k) => (
+                    <i key={k} />
+                  ))}
+                </span>
+                <b className={s.reEntry > 0 ? "bad" : undefined}>{s.reEntry}</b>
+              </span>
+            </div>
+          );
+        })}
       </div>
+
+      {bare ? null : (
+        <ul className="led-key" aria-hidden>
+          <li>
+            <span className="k-dot" /> where the record is
+          </li>
+          <li>
+            <span className="k-sheet-dot" /> on a spreadsheet
+          </li>
+          <li>
+            <span className="k-tie" /> the same unit, two places at once
+          </li>
+          <li>
+            <span className="k-sheet" /> entered again here
+          </li>
+        </ul>
+      )}
 
       <div className="led-hud">
         <div className="hud-cell">
@@ -151,12 +211,13 @@ export function VanLedger({ bare }: { bare?: boolean } = {}) {
 
       {bare ? null : (
         <p className="led-say">
-          Every filled square is a place the same caravan is at that stage, so a
-          row with two of them is one unit in two systems at once, and neither
-          of them is the caravan. The sheets on the right are the times the
-          information gets typed in again rather than carried across.{" "}
-          <b>{worst.name}</b> is the worst of them at {worst.reEntry}. Counted
-          off the process as it was walked through, not modelled.
+          A bar joining two marks on one row is the same caravan sitting in two
+          systems at the same time, and neither of them is the caravan. The
+          sheets on the right are the times the information gets typed in again
+          rather than carried across; <b>{worst.name}</b> is the worst of them
+          at {worst.reEntry}. Every number on this figure is a count off the
+          process as it was walked through on the day. Nothing here is
+          simulated and nothing is estimated.
         </p>
       )}
     </div>

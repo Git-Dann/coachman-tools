@@ -149,8 +149,8 @@ function Hero() {
             One caravan, and nowhere to look it up.
           </h1>
           <p className="lede hero-sub">
-            A day at the order desk in Hull. Fourteen places each hold a piece of
-            one caravan, and none of them is the caravan.
+            A day at the order desk in Hull. Fourteen spreadsheets each hold a
+            piece of one caravan, and not one of them is the caravan.
           </p>
           <div className="hero-cta">
             <a className="btn go" href="#throttle">
@@ -175,12 +175,13 @@ function Three() {
         <div className="mid">
           <p className="tag">How it runs</p>
           <h2 className="h2">
-            Sixteen steps to get one caravan out, and twenty of them are done
-            twice.
+            Sixteen steps to get one caravan out, and nowhere that holds the
+            whole of it.
           </h2>
           <p className="lede">
-            Nothing here is modelled. Every count comes off the process as it was
-            walked through on the day.
+            Every count here comes off the process as it was walked through on
+            the day. Where a figure is a simulation or an estimate rather than a
+            count, it says so on the figure itself.
           </p>
         </div>
       </Reveal>
@@ -196,8 +197,9 @@ function Three() {
             <div className="card-say">
               <b>Half of it is waiting</b>
               <span>
-                Twenty-two caravans through the process as it runs today. Half
-                their time is spent behind something else.
+                A season of twenty-two caravans run through the process as it
+                was described. Simulated, not measured: half of each
+                caravan&rsquo;s time comes out as waiting.
               </span>
             </div>
           </a>
@@ -212,9 +214,9 @@ function Three() {
             <div className="card-say">
               <b>In two places at once, five times over</b>
               <span>
-                Twelve stages down, the five places a record can be across. At
-                five of them the same caravan is in two systems, and neither
-                one is the caravan.
+                Twelve stages down the side, the places a record can be across
+                the top. At five stages the same caravan sits in two of them at
+                the same time.
               </span>
             </div>
           </a>
@@ -301,7 +303,8 @@ function Moves() {
             <div className="move-say">
               <h3 className="h3">Half the time is queueing</h3>
               <p className="note">
-                Every row is one caravan. Blue is work, red is waiting behind
+                Every row is one caravan, simulated over a season through the
+                process as described. Blue is work, red is waiting behind
                 something else, and invoicing swallows more of it than anywhere.
               </p>
             </div>
@@ -358,12 +361,13 @@ function Numbers() {
         <div className="mid">
           <p className="tag">What it costs</p>
           <h2 className="h2">
-            Fourteen hundred of those hours are the same thing, typed twice.
+            Thirteen hundred of those hours are the same thing, typed twice.
           </h2>
           <p className="lede">
-            Three numbers, and they are all the same number seen from different
-            sides. The hours are estimates against your volume, because nobody
-            was timed on the day. The counts are counted.
+            Two thousand caravans a year is your figure. The hours are ours: an
+            estimate against that volume, because nobody was timed on the day.
+            The third number is the part of the second that produces nothing
+            new.
           </p>
         </div>
       </Reveal>
@@ -380,8 +384,9 @@ function Numbers() {
           <p className="tag">Why</p>
           <h2 className="h2">Nowhere holds the whole caravan.</h2>
           <p className="lede">
-            Twelve stages down the side, the five places a record can be across
-            the top. Where a row has two squares in it, the same unit is sitting
+            Twelve stages down the side, the five kinds of place a record can be
+            across the top; the spreadsheet column stands for the fourteen that
+            were mentioned. Where a bar joins two marks, the same unit is sitting
             in two systems at the same time.
           </p>
         </div>
@@ -477,9 +482,9 @@ function Build() {
           The same order, done once. Twelve stages instead of sixteen steps, one
           record going round one loop, and a single sheet at each stage rather
           than a pile. Drag the volume as far as it goes: the loop runs at the
-          same pace, the sheet stays one, and the re-entry stays at nothing,
-          which is the whole of the difference. Everything that grows is the
-          work itself. Zoom out and the same twelve stages run anywhere.
+          same pace, the sheet stays one, and the re-entry stays at nothing.
+          That is the whole of the difference. Zoom out and the same twelve
+          stages run anywhere.
         </p>
       </Reveal>
     </section>
@@ -536,21 +541,22 @@ function Foot() {
           <b>Gitwork</b>
           <p>
             Order Flow. A working draft for Coachman, FY26/27. Every figure on
-            this page traces to something said on the day; where a number is an
-            estimate it says so where it appears.
+            this page traces back to something said on the day. Where one is an
+            estimate against your volume, or the output of a simulation rather
+            than a count, it says so where it appears.
           </p>
         </div>
         <div className="ft-col">
           <h4>How it runs</h4>
           <ul>
             <li>
-              <a href="#how">The three findings</a>
+              <a href="#how">How it runs</a>
             </li>
             <li>
               <a href="#throttle">The throttle</a>
             </li>
             <li>
-              <a href="#journey">One caravan</a>
+              <a href="#journey">What it costs</a>
             </li>
           </ul>
         </div>
@@ -558,7 +564,7 @@ function Foot() {
           <h4>Where it breaks</h4>
           <ul>
             <li>
-              <a href="#season">The three moves</a>
+              <a href="#season">Where it breaks</a>
             </li>
             <li>
               <a href="#broken">What is broken</a>
@@ -569,7 +575,7 @@ function Foot() {
           <h4>What we build</h4>
           <ul>
             <li>
-              <a href="#build">Three decisions</a>
+              <a href="#build">What we build</a>
             </li>
             <li>
               <a href="#ask">The ask</a>
