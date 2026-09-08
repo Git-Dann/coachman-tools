@@ -3183,3 +3183,48 @@ ul.pl.big li::before {
     align-content: safe center;
   }
 }
+
+
+/* ------------------------------------------- what the season colours mean */
+
+.ssim-key {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 22px;
+  margin: 0;
+  padding: 11px 20px;
+  border-top: 1px solid var(--color-line);
+  background: var(--color-ink);
+}
+.ssim-key li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-3);
+}
+.ssim-key i {
+  width: 13px;
+  height: 13px;
+  border-radius: 3px;
+  flex: none;
+}
+.ssim-key .k-work {
+  background: #f2f6f8;
+}
+.ssim-key .k-hold {
+  background: var(--color-brass);
+}
+.ssim-key .k-stuck {
+  background: var(--color-flag);
+}
+.ssim-key .k-bar {
+  background: var(--color-flag);
+  width: 5px;
+  height: 15px;
+  border-radius: 2px;
+}

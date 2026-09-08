@@ -253,14 +253,16 @@ export function sizeFixedLabel(
 export function stationPositions(n: number, rows: 1 | 2 = 1): THREE.Vector3[] {
   if (rows === 2) {
     const top = Math.ceil(n / 2);
-    const span = 21;
+    const span = 19;
     return Array.from({ length: n }, (_, i) => {
       const back = i >= top;
       // The second row runs the other way, so the two join at the near end.
       const k = back ? n - 1 - i : i;
       const cols = back ? n - top : top;
       const t = cols <= 1 ? 0.5 : k / (cols - 1);
-      return new THREE.Vector3((t - 0.5) * span, 0, back ? 5.8 : -5.8);
+      // Set well apart in depth, which is what reads as vertical on screen:
+      // close together the two rows left most of a tall frame empty.
+      return new THREE.Vector3((t - 0.5) * span, 0, back ? 9.4 : -9.4);
     });
   }
   const out: THREE.Vector3[] = [];

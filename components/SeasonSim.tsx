@@ -18,6 +18,7 @@ import {
   caravanGeometry,
   fitDistance,
   ringGeometry,
+  sizeFixedLabel,
   labelSprite,
   stationPositions,
 } from "@/lib/scene";
@@ -30,7 +31,16 @@ type Mode = "today" | "proposed";
  * be quick or a queue never gets the chance to build while anyone is watching.
  * Movement is smoothed separately, so fast ticks still look fluid.
  */
-const TICK = 85;
+/*
+ * How long one step of the process takes on screen.
+ *
+ * This was 85ms with a caravan released every third step, which meant a new one
+ * every quarter of a second and the whole season over before anyone could see
+ * what had happened. At this pace you can watch one caravan and see where it
+ * stops, which is the entire point of the slide.
+ */
+const TICK = 300;
+const RELEASE_EVERY = 2;
 const MAX_VANS = 260;
 
 /**
@@ -181,7 +191,7 @@ export function SeasonSim() {
         stationGroup.add(mark);
         marks.push(mark);
 
-        const label = labelSprite(s.short, "#9DAFBA");
+        const label = labelSprite(s.short, "#C6D5DF", false, true);
         label.position.set(positions[i].x, 1.85, positions[i].z);
         stationGroup.add(label);
         labels.push(label);
@@ -214,16 +224,18 @@ export function SeasonSim() {
       // Both ends point away from the middle, whichever way the line is laid.
       const firstP = positions[0];
       const lastP = positions[positions.length - 1];
-      const inLbl = labelSprite("IN", "#6C7D89");
-      inLbl.position.set(firstP.x - 3.2, 1.1, firstP.z);
+      const inLbl = labelSprite("IN", "#8C9DA9", false, true);
+      inLbl.position.set(firstP.x - 2.4, 1.1, firstP.z);
       stationGroup.add(inLbl);
-      const outLbl = labelSprite("OUT", "#6FAE7F");
+      labels.push(inLbl);
+      const outLbl = labelSprite("OUT", "#6FAE7F", false, true);
       outLbl.position.set(
-        lastP.x + (layoutRows === 2 ? -3.6 : 3.4),
+        lastP.x - 2.6,
         1.1,
         lastP.z,
       );
       stationGroup.add(outLbl);
+      labels.push(outLbl);
     };
 
     /* -------------------------------------------------------- caravans */
@@ -258,27 +270,37 @@ export function SeasonSim() {
 
     /* ------------------------------------------------------------ size */
     /*
-     * The line of stations is long, so on a narrow canvas the camera has to come
-     * back to keep both ends of it in frame. The reach is measured off the
-     * station labels, which stick out further than the pads they name.
+     * The line always snakes into two rows.
+     *
+     * One row of sixteen was thirty-four units long, which overflowed anything
+     * narrower than a cinema screen and left the stations 2.3 apart. Two rows
+     * of eight are twenty-one across and 3.1 apart, so the same picture fits in
+     * more places and the names sit further from each other in all of them.
      */
-    const REACH_V = 11;
-    let reachH = 19;
-    // One long line on a wide canvas, snaked into two on a narrow one.
-    let layoutRows: 1 | 2 = 1;
+    const REACH_V = 8.5;
+    const layoutRows: 1 | 2 = 2;
+    let reachH = 13;
+    let widestLabel = 4;
     const measureReach = () => {
-      let r = 12;
       // Radial, because the camera turns: a station at the far end of the line
-      // swings across the frame as it does.
+      // swings across the frame as it does. The names are drawn at a fixed size
+      // on screen, so their width is reserved out of the frame rather than
+      // added to the reach as a world measure.
+      let r = 12;
       for (const l of labels) {
-        r = Math.max(r, Math.hypot(l.position.x, l.position.z) + l.scale.x / 2);
+        r = Math.max(r, Math.hypot(l.position.x, l.position.z));
       }
-      reachH = r;
+      reachH = r + 1.2;
+      widestLabel = labels.reduce(
+        (m, l) => Math.max(m, l.userData.ratio as number),
+        3,
+      );
     };
     let dist = 23.5;
 
     let w = 0;
     let h = 0;
+    let labelPx = 13;
     const resize = () => {
       const r = mount.getBoundingClientRect();
       w = Math.max(1, r.width);
@@ -287,8 +309,10 @@ export function SeasonSim() {
       composer.setSize(w, h);
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
-      layoutRows = camera.aspect < 1.45 ? 2 : 1;
-      dist = Math.max(23.5, fitDistance(camera, reachH, REACH_V));
+      labelPx = Math.max(10.5, Math.min(17, w / 92));
+      for (const l of labels) sizeFixedLabel(l, labelPx, h);
+      const share = Math.min(0.42, (labelPx * widestLabel) / Math.max(1, w));
+      dist = Math.max(23.5, fitDistance(camera, reachH / (1 - share), REACH_V));
       const k = dist / 23.5;
       (scene.fog as THREE.Fog).near = 16 * k;
       (scene.fog as THREE.Fog).far = 52 * k;
@@ -329,7 +353,6 @@ export function SeasonSim() {
     let acc = 0;
     let last = performance.now();
     let lastReset = resetRef.current;
-    let builtRows: 1 | 2 = layoutRows;
     let raf = 0;
 
     const frame = (now: number) => {
@@ -338,23 +361,21 @@ export function SeasonSim() {
 
       if (
         resetRef.current !== lastReset ||
-        builtFor !== simRef.current.stations.length ||
-        builtRows !== layoutRows
+        builtFor !== simRef.current.stations.length
       ) {
         buildStations(simRef.current);
         // Same as the hub: the reach is only knowable once the labels exist.
         measureReach();
         resize();
         builtFor = simRef.current.stations.length;
-        builtRows = layoutRows;
         lastReset = resetRef.current;
       }
 
       if (runRef.current) {
         acc += dt;
         let guard = 0;
-        while (acc >= TICK && guard < 4) {
-          simRef.current = advance(simRef.current, 3);
+        while (acc >= TICK && guard < 2) {
+          simRef.current = advance(simRef.current, RELEASE_EVERY);
           acc -= TICK;
           guard++;
         }
@@ -455,14 +476,14 @@ export function SeasonSim() {
 
       if (!reduced && !userMoved) yaw += 0.0006;
       // Framed so the whole line stays inside the viewport at any yaw.
-      // Look down harder on the snaked layout: the two rows are stacked in
-      // depth, and a low camera flattens them into each other.
+      // Looking down hard, because the two rows are stacked in depth and a low
+      // camera flattens them into each other.
       camera.position.set(
         Math.sin(yaw) * dist,
-        dist * (layoutRows === 2 ? 0.66 : 0.451),
-        Math.cos(yaw) * dist + 1,
+        dist * 0.66,
+        Math.cos(yaw) * dist,
       );
-      camera.lookAt(0, 1.4, 0);
+      camera.lookAt(0, 0.9, 0);
 
       composer.render();
       raf = requestAnimationFrame(frame);
@@ -558,6 +579,27 @@ export function SeasonSim() {
         </div>
       </div>
 
+      {/* What the picture means, next to the picture. Without this the colours
+          are decoration and the slide explains nothing. */}
+      <ul className="ssim-key" aria-label="What the colours mean">
+        <li>
+          <i className="k-work" />
+          being worked on
+        </li>
+        <li>
+          <i className="k-hold" />
+          waiting a while
+        </li>
+        <li>
+          <i className="k-stuck" />
+          waiting too long
+        </li>
+        <li>
+          <i className="k-bar" />
+          time swallowed at that station
+        </li>
+      </ul>
+
       <div className="ssim-ctl">
         <button
           type="button"
@@ -565,6 +607,19 @@ export function SeasonSim() {
           onClick={() => setRunning((r) => !r)}
         >
           {running ? "Pause" : view.tick ? "Resume" : "Run the season"}
+        </button>
+        {/* One step at a time, so it can be talked through rather than watched
+            going past. */}
+        <button
+          type="button"
+          className="mini big"
+          onClick={() => {
+            setRunning(false);
+            simRef.current = advance(simRef.current, RELEASE_EVERY);
+            setView(simRef.current);
+          }}
+        >
+          Step
         </button>
         <button type="button" className="mini big" onClick={() => reset(mode)}>
           Reset
