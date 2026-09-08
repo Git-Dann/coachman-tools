@@ -4,10 +4,10 @@ import { useEffect, useState } from "react";
 import { CoverScene } from "./CoverScene";
 import { HubSim } from "./HubSim";
 import { SeasonTimeline } from "./SeasonTimeline";
-import { VanJourney } from "./VanJourney";
+import { VanLedger } from "./VanLedger";
 import { PeopleGrid } from "./PeopleGrid";
 import { CeilingChart } from "./CeilingChart";
-import { Count, Drive, Reveal } from "./scroll";
+import { Count, Drive, Reveal, useActiveSection } from "./scroll";
 import { FAULTS } from "@/content/faults";
 import { ASKS, DECISIONS, QUOTE } from "@/content/page";
 
@@ -49,29 +49,53 @@ export function Site() {
 
 /* ═══════════════════════════════════════════════════════════════════ bar */
 
+/**
+ * The sections the bar navigates, in the order the page runs them.
+ *
+ * The labels used to be the ones from the deck, and two of them named a
+ * different section from the one they scrolled to. These are what each section
+ * actually says.
+ */
+const NAV = [
+  { id: "how", t: "How it runs" },
+  { id: "throttle", t: "The throttle" },
+  { id: "season", t: "Where it breaks" },
+  { id: "journey", t: "What it costs" },
+  { id: "broken", t: "What is broken" },
+  { id: "build", t: "What we build" },
+] as const;
+
+/* The ask has its own button on the right, so it is spied on but not listed. */
+const SPY_IDS = [...NAV.map((n) => n.id), "ask"];
+
 function Bar() {
+  const active = useActiveSection(SPY_IDS);
   return (
     <header className="bar">
       <div className="bar-in">
         <a className="bar-mark" href="#top">
-          <b>Gitwork</b>
-          <span>Order Flow</span>
+          Order Flow
         </a>
         <nav className="bar-links" aria-label="Sections">
-          <a className="pill" href="#throttle">
-            The throttle
-          </a>
-          <a className="pill" href="#season">
-            The season
-          </a>
-          <a className="pill" href="#broken">
-            What is broken
-          </a>
+          {NAV.map((n) => (
+            <a
+              key={n.id}
+              className={`pill${active === n.id ? " on" : ""}`}
+              href={`#${n.id}`}
+              aria-current={active === n.id ? "true" : undefined}
+            >
+              {n.t}
+            </a>
+          ))}
         </nav>
       </div>
       <div className="bar-in">
         <Theme />
-        <a className="pill solid" href="#ask">
+        <a
+          className={`pill solid${active === "ask" ? " on" : ""}`}
+          href="#ask"
+          aria-current={active === "ask" ? "true" : undefined}
+        >
           The ask
         </a>
       </div>
@@ -182,14 +206,15 @@ function Three() {
           <a className="card" href="#journey">
             <div className="card-fig">
               <Mini>
-                <VanJourney drive={0.86} />
+                <VanLedger bare />
               </Mini>
             </div>
             <div className="card-say">
-              <b>Five places, seven crossings</b>
+              <b>In two places at once, five times over</b>
               <span>
-                One caravan&rsquo;s record, stage by stage, changing hands
-                between systems that cannot talk to each other.
+                Twelve stages down, the five places a record can be across. At
+                five of them the same caravan is in two systems, and neither
+                one is the caravan.
               </span>
             </div>
           </a>
@@ -238,11 +263,12 @@ function Throttle() {
             <p className="tag">The throttle</p>
             <h2 className="h2">Add volume and the desk runs out of year.</h2>
             <p className="note">
-              Every job that touches a caravan, ringed around it. The stack on
-              each one is the number of times the same information gets entered
-              again. Keep scrolling: the volume climbs to a hundred times, and
-              the work per caravan climbs with it, because none of it is done
-              once.
+              Every job that touches one caravan, laid out around it. Keep
+              scrolling and the volume climbs to a hundred times today&rsquo;s.
+              The paper climbs with it, because nothing here gets cheaper per
+              caravan: the same things are entered again whether you build two
+              thousand or two hundred thousand. Which is why the desk, and not
+              the factory, is the ceiling.
             </p>
           </div>
         </div>
@@ -352,18 +378,18 @@ function Numbers() {
       <Reveal delay={0.16}>
         <div className="mid" style={{ marginTop: 96 }}>
           <p className="tag">Why</p>
-          <h2 className="h2">The record never settles anywhere.</h2>
+          <h2 className="h2">Nowhere holds the whole caravan.</h2>
           <p className="lede">
-            One caravan, stage by stage. The line is the record changing hands.
-            Every time it jumps a lane, somebody carried something between two
-            systems, and the bars are where it got typed in again.
+            Twelve stages down the side, the five places a record can be across
+            the top. Where a row has two squares in it, the same unit is sitting
+            in two systems at the same time.
           </p>
         </div>
       </Reveal>
       <Reveal delay={0.2}>
         <div className="frame" style={{ marginTop: 40 }}>
           <div className="frame-in">
-            <VanJourney still />
+            <VanLedger />
           </div>
         </div>
       </Reveal>

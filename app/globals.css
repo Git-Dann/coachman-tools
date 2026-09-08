@@ -4070,20 +4070,25 @@ ul.pl.big li::before {
   border: var(--ring);
   box-shadow: var(--shadow-card);
 }
+/*
+ * The mark is the page's own name. The Gitwork wordmark sat in front of it and
+ * the footer already signs the page off, so the bar says what you are looking
+ * at rather than who made it.
+ */
 .bar-mark {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
+  display: inline-flex;
+  align-items: center;
+  height: 34px;
+  padding: 0 12px 0 6px;
+  margin-right: 4px;
   text-decoration: none;
-  padding-right: 6px;
-}
-.bar-mark b {
-  font-size: 0.95rem;
-  font-weight: 700;
-  letter-spacing: -0.03em;
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 400;
+  letter-spacing: -0.015em;
   color: var(--color-text);
+  border-right: 1px solid var(--color-line);
 }
-.bar-mark span,
 .pill {
   font-family: var(--font-mono);
   font-size: 0.62rem;
@@ -4108,6 +4113,29 @@ ul.pl.big li::before {
   background: var(--color-surface-2);
   color: var(--color-text);
 }
+/*
+ * Where you are. The dot carries it as much as the colour does, so it is not
+ * the only difference between the current pill and the rest of them.
+ */
+.pill.on {
+  color: var(--color-text);
+  background: var(--color-surface-2);
+}
+.pill.on::before {
+  content: "";
+  width: 5px;
+  height: 5px;
+  margin-right: 7px;
+  border-radius: 999px;
+  background: var(--color-brass);
+}
+.pill.solid.on {
+  background: var(--color-brass);
+  color: #fff;
+}
+.pill.solid.on::before {
+  background: #fff;
+}
 .pill.solid {
   background: var(--color-text);
   color: var(--color-ink);
@@ -4125,6 +4153,18 @@ ul.pl.big li::before {
  * right edge, and this is one page you can simply scroll. Ordering matters:
  * this has to sit after the rule it is overriding.
  */
+/* Six pills plus the mark stops fitting well before the bar runs out of room. */
+@media (max-width: 1320px) {
+  .bar-links a:nth-child(1),
+  .bar-links a:nth-child(6) {
+    display: none;
+  }
+}
+@media (max-width: 1080px) {
+  .bar-links a:nth-child(4) {
+    display: none;
+  }
+}
 @media (max-width: 860px) {
   .bar-links {
     display: none;
@@ -4905,4 +4945,233 @@ ul.pl.big li::before {
 }
 .nums.three > li > span {
   max-width: 24ch;
+}
+
+/* ═══════════════════════════════════════════════════ one caravan, stage by stage */
+
+/*
+ * A matrix, not a chart. The columns are the places a record can be and the
+ * rows are the stages, so "the same unit is in two systems at once" is a row
+ * with two squares in it rather than a line that jumps a lane, and "entered
+ * again" is that many sheets rather than a bar you measure against no axis.
+ */
+.led-grid {
+  --led-cols: 1.9fr repeat(5, 76px) 108px;
+  display: grid;
+  gap: 0;
+}
+.led-head,
+.led-row {
+  display: grid;
+  grid-template-columns: var(--led-cols);
+  align-items: center;
+  gap: 0;
+}
+.led-head {
+  padding: 0 0 10px;
+  border-bottom: 1px solid var(--color-line);
+}
+.led-head > * {
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-text-3);
+}
+.led-h-place {
+  text-align: center;
+  padding: 0 3px;
+  line-height: 1.25;
+  /* SPREADSHEET is wider than its column and was printing over PAPER. */
+  overflow-wrap: anywhere;
+}
+.led-h-re {
+  text-align: right;
+}
+
+.led-row {
+  border-bottom: 1px solid var(--color-line);
+  min-height: 54px;
+  transition: background-color 0.2s;
+}
+.led-row:hover {
+  background: var(--color-surface-2);
+}
+/* One unit, two systems, same stage. This is the overlap. */
+.led-row.split {
+  background: color-mix(in srgb, var(--color-flag) 6%, transparent);
+}
+.led-row.split:hover {
+  background: color-mix(in srgb, var(--color-flag) 11%, transparent);
+}
+
+.led-stage {
+  display: grid;
+  grid-template-columns: 26px 1fr;
+  align-items: baseline;
+  column-gap: 8px;
+  padding: 10px 18px 10px 0;
+  min-width: 0;
+}
+.led-stage i {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  font-style: normal;
+  color: var(--color-text-3);
+}
+.led-stage b {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 1rem;
+  letter-spacing: -0.015em;
+  color: var(--color-text);
+}
+.led-stage em {
+  grid-column: 2;
+  font-style: normal;
+  font-size: 0.76rem;
+  line-height: 1.45;
+  color: var(--color-text-3);
+}
+
+.led-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  align-self: stretch;
+  border-left: 1px solid var(--color-line);
+}
+.led-cell .led-dot {
+  width: 15px;
+  height: 15px;
+  border-radius: 3px;
+  border: 1px solid var(--color-line-2);
+  background: transparent;
+}
+.led-cell.on .led-dot {
+  border-color: transparent;
+  background: var(--color-steel);
+}
+/* The spreadsheet column, because that is the friction people asked about. */
+.led-cell.on.sheet .led-dot {
+  background: var(--color-flag);
+}
+
+.led-re {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-left: 14px;
+  border-left: 1px solid var(--color-line);
+  align-self: stretch;
+}
+/* One sheet per re-entry: five reads as five without going back to an axis. */
+.led-sheets {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.led-sheets i {
+  width: 7px;
+  height: 13px;
+  border-radius: 1px;
+  background: var(--color-flag);
+}
+.led-re b {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  min-width: 12px;
+  text-align: right;
+  color: var(--color-text-3);
+}
+.led-re b.bad {
+  color: var(--color-flag);
+}
+
+.led-hud {
+  margin-top: 22px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1px;
+  background: var(--color-line);
+  border: 1px solid var(--color-line);
+}
+.led-hud .hud-cell {
+  background: var(--color-surface);
+  padding: 14px 16px;
+}
+.led-say {
+  margin: 20px 0 0;
+  max-width: 78ch;
+  font-size: 0.86rem;
+  line-height: 1.6;
+  color: var(--color-text-2);
+}
+.led-say b {
+  font-weight: 500;
+  color: var(--color-text);
+}
+
+@media (max-width: 900px) {
+  .led-grid {
+    --led-cols: 1fr repeat(5, 34px) 76px;
+  }
+  .led-stage em {
+    display: none;
+  }
+  .led-head > * {
+    font-size: 0.5rem;
+  }
+  .led-h-place {
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    justify-self: center;
+    max-height: 84px;
+  }
+  .led-row {
+    min-height: 44px;
+  }
+  .led-sheets i {
+    width: 4px;
+    height: 10px;
+  }
+}
+
+/* At card size it is a texture: the shape of it, none of the words. */
+.mini-fig .led-head,
+.mini-fig .led-say,
+.mini-fig .led-hud,
+.mini-fig .led-stage em,
+.mini-fig .led-stage i,
+.mini-fig .led-re b {
+  display: none;
+}
+.mini-fig .led {
+  align-self: stretch;
+  height: 100%;
+}
+.mini-fig .led-grid {
+  --led-cols: 1.2fr repeat(5, 1fr) 1.4fr;
+  height: 100%;
+  grid-auto-rows: minmax(0, 1fr);
+}
+.mini-fig .led-row {
+  min-height: 0;
+}
+.mini-fig .led-stage {
+  padding: 0 6px 0 0;
+}
+.mini-fig .led-stage b {
+  font-size: 0.5rem;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.mini-fig .led-cell .led-dot {
+  width: 9px;
+  height: 9px;
+}
+.mini-fig .led-sheets i {
+  width: 3px;
+  height: 8px;
 }

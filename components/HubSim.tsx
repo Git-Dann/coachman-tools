@@ -187,11 +187,15 @@ export function HubSim({ mode, drive }: { mode: Mode; drive?: number }) {
     let nodeAt: THREE.Vector3[] = [];
 
     const RADIUS = 9.6;
+    /* How many times over the pile grows between one volume and a hundred. */
+    const PILE_PASSES = 6;
+    const pileOf: number[] = [];
 
     const buildRing = (js: Job[], proposed: boolean) => {
       ring.clear();
       pads = [];
       plates = [];
+      pileOf.length = 0;
       marks = [];
       labels = [];
       links = [];
@@ -216,9 +220,22 @@ export function HubSim({ mode, drive }: { mode: Mode; drive?: number }) {
         ring.add(pad);
         pads.push(pad);
 
-        // One plate for the job, plus one for every time it is entered again.
+        /*
+         * The pile.
+         *
+         * One sheet for every time this job's information gets entered again,
+         * and then the same pile over again for each pass of the volume, so it
+         * grows as you scroll. Every sheet is built here and hidden; the render
+         * loop only changes how many are showing, because creating meshes on a
+         * scroll frame is how a scene starts stuttering.
+         *
+         * It piles outward as well as upward. Twenty-one sheets stacked in a
+         * single column is a tower, and a tower reads as a bar chart; a pile
+         * reads as paper somebody has to get through.
+         */
         const stack: THREE.Mesh[] = [];
-        for (let d = 0; d < job.duplication; d++) {
+        const per = Math.max(1, job.duplication);
+        for (let d = 0; d < job.duplication * PILE_PASSES; d++) {
           const plate = new THREE.Mesh(
             plateGeo,
             new THREE.MeshStandardMaterial({
@@ -227,16 +244,21 @@ export function HubSim({ mode, drive }: { mode: Mode; drive?: number }) {
               roughness: 0.65,
             }),
           );
+          const layer = Math.floor(d / per);
+          const k = d % per;
           plate.position.set(
-            pos.x + (d % 2 === 0 ? 1 : -1) * 0.07 * d,
-            0.2 + d * 0.2,
-            pos.z + (d % 2 === 0 ? -1 : 1) * 0.06 * d,
+            pos.x + (k % 2 === 0 ? 1 : -1) * 0.07 * k + (layer % 2 ? 0.06 : -0.05),
+            0.2 + layer * 0.185 + k * 0.055,
+            pos.z + (k % 2 === 0 ? -1 : 1) * 0.06 * k + (layer % 2 ? -0.05 : 0.04),
           );
-          plate.rotation.y = (d % 2 === 0 ? 1 : -1) * 0.13 * (d + 1);
+          plate.rotation.y =
+            (k % 2 === 0 ? 1 : -1) * 0.13 * (k + 1) + layer * 0.23;
+          plate.visible = layer === 0;
           ring.add(plate);
           stack.push(plate);
         }
         plates.push(stack);
+        pileOf.push(job.duplication);
 
         /*
          * A ring on the floor under each job, carrying the heat. Only in
@@ -688,7 +710,20 @@ export function HubSim({ mode, drive }: { mode: Mode; drive?: number }) {
             gm.opacity += (0.34 + st.heat * 0.5 - gm.opacity) * 0.08;
           }
 
-          for (const plate of plates[i]) {
+          /*
+           * The pile grows with the volume. The cost per caravan never drops,
+           * so at a hundred times the output there is a hundred times the
+           * re-entry, and the paper is the only honest way to show that: a
+           * number going up is a number, a pile going up is the work.
+           */
+          const dup = pileOf[i] ?? 0;
+          const passes =
+            1 + Math.round(((PILE_PASSES - 1) * (st.mult - 1)) / 99);
+          const showing = dup * passes;
+          for (let d = 0; d < plates[i].length; d++) {
+            const plate = plates[i][d];
+            plate.visible = d < showing;
+            if (!plate.visible) continue;
             const pm = plate.material as THREE.MeshStandardMaterial;
             pm.color.lerp(tint, 0.08);
             pm.emissive.lerp(tint, 0.08);

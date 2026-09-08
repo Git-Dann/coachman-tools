@@ -224,3 +224,52 @@ export function useGround(): "light" | "dark" {
   }, []);
   return g;
 }
+
+/**
+ * Which section the reader is actually in.
+ *
+ * Not IntersectionObserver: the pinned section is four screens tall and the
+ * short ones are less than one, so "is it intersecting" answers a different
+ * question and can be true for three of them at once. This asks the only
+ * question the bar needs, which is what you are reading now: of the sections
+ * whose top has passed the bar, the last one. Measured against a line just
+ * below the bar so a heading counts as arrived when it clears it, not when it
+ * touches the bottom of the screen.
+ */
+export function useActiveSection(ids: readonly string[]): string | null {
+  const [active, setActive] = useState<string | null>(null);
+  useEffect(() => {
+    let frame = 0;
+    const read = () => {
+      frame = 0;
+      /* The bar is 88px of it, plus a little so the heading is legible. */
+      const line = 140;
+      let found: string | null = null;
+      for (const id of ids) {
+        const el = document.getElementById(id);
+        if (!el) continue;
+        if (el.getBoundingClientRect().top <= line) found = id;
+      }
+      /* Right at the bottom the last section wins even if it is short. */
+      if (
+        window.innerHeight + window.scrollY >=
+        document.documentElement.scrollHeight - 4
+      ) {
+        found = ids[ids.length - 1] ?? found;
+      }
+      setActive(found);
+    };
+    const onScroll = () => {
+      if (!frame) frame = requestAnimationFrame(read);
+    };
+    read();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      if (frame) cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+    };
+  }, [ids]);
+  return active;
+}
